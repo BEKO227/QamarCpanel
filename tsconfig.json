@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/admin/dashboard/page.jsx", "lib/AdminAuthContext.jsx", "app/middleware.jsx"  ],
   "exclude": ["node_modules"]
 }
