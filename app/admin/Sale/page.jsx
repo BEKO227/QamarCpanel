@@ -39,20 +39,28 @@ export default function SaleSettingsPage() {
   };
 
   return (
-    <div className="flex">
-      <AdminSidebar />
+    <div className="flex flex-col md:flex-row">
+      {/* Sidebar */}
+      <div className="w-full md:w-auto">
+        <AdminSidebar />
+      </div>
 
-      <main className="flex-1 p-6 bg-gray-100 min-h-screen">
-        <h1 className="text-2xl font-bold mb-6">Sale Settings</h1>
+      {/* Main Content */}
+      <main className="flex-1 p-4 sm:p-6 bg-gray-100 min-h-screen">
+        <h1 className="text-2xl font-bold mb-6 text-center md:text-left">
+          Sale Settings
+        </h1>
 
         {/* SALE BAR */}
-        <div className="mb-8 p-5 bg-white border rounded shadow-sm">
-          <h2 className="text-xl font-semibold mb-3">Sale Bar (Top Banner)</h2>
+        <div className="mb-8 p-4 sm:p-5 bg-white border rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-4 text-center sm:text-left">
+            Sale Bar (Top Banner)
+          </h2>
 
           <label className="block font-medium mb-1">Description</label>
           <input
             type="text"
-            className="border p-2 rounded w-full"
+            className="border p-2 rounded w-full text-sm sm:text-base"
             value={saleBar.description}
             onChange={(e) =>
               setSaleBar({ ...saleBar, description: e.target.value })
@@ -62,20 +70,22 @@ export default function SaleSettingsPage() {
 
           <button
             onClick={updateSaleBar}
-            className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            className="mt-4 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
           >
             Save Sale Bar
           </button>
         </div>
 
         {/* SALE POPUP */}
-        <div className="p-5 bg-white border rounded shadow-sm">
-          <h2 className="text-xl font-semibold mb-3">Sale Pop-Up</h2>
+        <div className="p-4 sm:p-5 bg-white border rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-4 text-center sm:text-left">
+            Sale Pop-Up
+          </h2>
 
           <label className="block font-medium mb-1">Title</label>
           <input
             type="text"
-            className="border p-2 rounded w-full mb-3"
+            className="border p-2 rounded w-full mb-3 text-sm sm:text-base"
             value={salePopUp.title}
             onChange={(e) =>
               setSalePopUp({ ...salePopUp, title: e.target.value })
@@ -85,7 +95,7 @@ export default function SaleSettingsPage() {
 
           <label className="block font-medium mb-1">Description</label>
           <textarea
-            className="border p-2 rounded w-full h-24"
+            className="border p-2 rounded w-full h-24 text-sm sm:text-base"
             value={salePopUp.description}
             onChange={(e) =>
               setSalePopUp({ ...salePopUp, description: e.target.value })
@@ -95,7 +105,7 @@ export default function SaleSettingsPage() {
 
           <button
             onClick={updateSalePopUp}
-            className="mt-3 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            className="mt-4 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
           >
             Save Pop-Up
           </button>

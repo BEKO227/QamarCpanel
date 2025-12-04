@@ -15,6 +15,16 @@ export default function OrderDetailsClient({ id }) {
       if (!orderSnap.exists()) return;
 
       const orderData = orderSnap.data();
+
+      // 🔥 Fetch user email if userId exists
+      if (orderData.userId) {
+        const userRef = doc(db, "users", orderData.userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          orderData.user = userSnap.data(); // contains email
+        }
+      }
+
       setOrder(orderData);
     };
 
@@ -22,7 +32,11 @@ export default function OrderDetailsClient({ id }) {
   }, [id]);
 
   if (!order)
-    return <p className="text-center mt-20 text-gray-500">Loading order...</p>;
+    return (
+      <p className="text-center mt-20 text-gray-500">
+        Loading order...
+      </p>
+    );
 
   const printInvoice = () => window.print();
 
@@ -46,6 +60,7 @@ export default function OrderDetailsClient({ id }) {
             ? new Date(order.createdAt.seconds * 1000).toLocaleString()
             : "N/A"}
         </p>
+
         <button
           onClick={printInvoice}
           className="mt-4 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900"
@@ -57,23 +72,26 @@ export default function OrderDetailsClient({ id }) {
       {/* Customer Info */}
       <div className="bg-white p-5 rounded-xl shadow">
         <h3 className="text-xl font-semibold mb-3">Customer Info</h3>
+
         <div className="space-y-1 text-gray-700">
           <p>
-            <span className="font-semibold">Name:</span> {order.firstName}{" "}
-            {order.lastName}
+            <span className="font-semibold">Name:</span>{" "}
+            {order.firstName} {order.lastName}
           </p>
+
           <p>
             <span className="font-semibold">Phone:</span> {order.phone}
           </p>
+
           <p>
             <span className="font-semibold">Address:</span> {order.address}
           </p>
-          {order.userId && (
-            <p>
-              <span className="font-semibold">Email:</span>{" "}
-              {order.user?.email || "—"}
-            </p>
-          )}
+
+          {/* 🔥 Show fetched user email */}
+          <p>
+            <span className="font-semibold">Email:</span>{" "}
+            {order.user?.email || "—"}
+          </p>
         </div>
       </div>
 
@@ -100,6 +118,7 @@ export default function OrderDetailsClient({ id }) {
       {/* Items */}
       <div className="bg-white p-5 rounded-xl shadow">
         <h3 className="text-xl font-semibold mb-3">Items</h3>
+
         <div className="space-y-4">
           {order.items.map((item, i) => (
             <div
@@ -113,12 +132,14 @@ export default function OrderDetailsClient({ id }) {
                 alt={item.title}
                 className="rounded"
               />
+
               <div className="flex-1">
                 <p className="font-semibold">{item.title}</p>
                 <p className="text-gray-600">
                   {item.price} EGP × {item.quantity}
                 </p>
               </div>
+
               <p className="font-bold">
                 {(item.quantity * item.price).toFixed(2)} EGP
               </p>
@@ -130,7 +151,8 @@ export default function OrderDetailsClient({ id }) {
       {/* Summary */}
       <div className="bg-white p-5 rounded-xl shadow text-right">
         <p>
-          <span className="font-semibold">Subtotal:</span> {order.subtotal} EGP
+          <span className="font-semibold">Subtotal:</span>{" "}
+          {order.subtotal} EGP
         </p>
 
         <p>

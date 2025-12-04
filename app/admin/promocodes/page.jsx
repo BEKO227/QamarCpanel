@@ -35,7 +35,6 @@ export default function PromoCodesPage() {
     };
   }
 
-  // Fetch promo codes
   useEffect(() => {
     const fetchCodes = async () => {
       const snapshot = await getDocs(collection(db, "promocodes"));
@@ -46,7 +45,6 @@ export default function PromoCodesPage() {
     fetchCodes();
   }, []);
 
-  // Search & Filter
   useEffect(() => {
     let list = [...codes];
 
@@ -57,13 +55,14 @@ export default function PromoCodesPage() {
     }
 
     if (filterStatus !== "all") {
-      list = list.filter((c) => (filterStatus === "active" ? c.active : !c.active));
+      list = list.filter((c) =>
+        filterStatus === "active" ? c.active : !c.active
+      );
     }
 
     setFiltered(list);
   }, [search, filterStatus, codes]);
 
-  // Add promo code
   const handleAdd = async () => {
     if (!newCode.code) return;
 
@@ -87,13 +86,11 @@ export default function PromoCodesPage() {
     setShowAddModal(false);
   };
 
-  // Delete
   const handleDelete = async (id) => {
     await deleteDoc(doc(db, "promocodes", id));
     setCodes(codes.filter((c) => c.id !== id));
   };
 
-  // Update
   const handleUpdate = async () => {
     if (!editCode) return;
     const ref = doc(db, "promocodes", editCode.id);
@@ -114,15 +111,16 @@ export default function PromoCodesPage() {
   };
 
   return (
-    <div className="flex">
+    <div className="flex flex-col md:flex-row">
       <AdminSidebar />
 
-      <main className="flex-1 p-6 bg-gray-100">
+      <main className="flex-1 p-4 md:p-6 bg-gray-100">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-6">
           <h2 className="text-2xl font-bold">Promo Codes</h2>
+
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow w-full md:w-auto"
             onClick={() => setShowAddModal(true)}
           >
             + Add Promo Code
@@ -130,17 +128,17 @@ export default function PromoCodesPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4 mb-4">
+        <div className="flex flex-col md:flex-row gap-3 mb-4">
           <input
             type="text"
             placeholder="Search promo code..."
-            className="p-2 border rounded w-64"
+            className="p-2 border rounded w-full md:w-64"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
           <select
-            className="p-2 border rounded"
+            className="p-2 border rounded w-full md:w-40"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
@@ -150,71 +148,133 @@ export default function PromoCodesPage() {
           </select>
         </div>
 
-        {/* Table */}
-        <table className="w-full table-auto border-collapse border">
-          <thead>
-            <tr className="bg-gray-200 text-center">
-              <th className="border p-2">Code</th>
-              <th className="border p-2">Description</th>
-              <th className="border p-2">Value</th>
-              <th className="border p-2">Min</th>
-              <th className="border p-2">Max</th>
-              <th className="border p-2">Usage</th>
-              <th className="border p-2">Used</th>
-              <th className="border p-2">First Order</th>
-              <th className="border p-2">Expires</th>
-              <th className="border p-2">Active</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filtered.map((c) => (
-              <tr key={c.id} className="text-center bg-white">
-                <td className="border p-2 font-bold">{c.id}</td>
-                <td className="border p-2">{c.description}</td>
-                <td className="border p-2">
-                  {c.discountValue}
-                  {c.discountType === "percentage" ? "%" : " EGP"}
-                </td>
-                <td className="border p-2">{c.minPurchase}</td>
-                <td className="border p-2">{c.maxDiscount}</td>
-                <td className="border p-2">{c.usageLimit}</td>
-                <td className="border p-2">{c.usedCount || 0}</td>
-                <td className="border p-2">{c.firstOrderOnly ? "Yes" : "No"}</td>
-                <td className="border p-2">
-                  {c.expiresAt?.seconds
-                    ? new Date(c.expiresAt.seconds * 1000).toLocaleString()
-                    : ""}
-                </td>
-                <td className="border p-2">{c.active ? "Yes" : "No"}</td>
-
-                <td className="border p-2 flex gap-2 justify-center">
-                  <button
-                    className="bg-yellow-500 px-3 py-1 rounded"
-                    onClick={() =>
-                      setEditCode({
-                        ...c,
-                        expiresAt: new Date(c.expiresAt.seconds * 1000)
-                          .toISOString()
-                          .slice(0, 16),
-                      })
-                    }
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="bg-red-600 px-3 py-1 rounded"
-                    onClick={() => handleDelete(c.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
+        {/* Table (Desktop) */}
+        <div className="hidden md:block overflow-x-auto bg-white shadow rounded">
+          <table className="w-full table-auto border-collapse">
+            <thead>
+              <tr className="bg-gray-200 text-center text-sm">
+                <th className="border p-2">Code</th>
+                <th className="border p-2">Description</th>
+                <th className="border p-2">Value</th>
+                <th className="border p-2">Min</th>
+                <th className="border p-2">Max</th>
+                <th className="border p-2">Usage</th>
+                <th className="border p-2">Used</th>
+                <th className="border p-2">First</th>
+                <th className="border p-2">Expires</th>
+                <th className="border p-2">Active</th>
+                <th className="border p-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {filtered.map((c) => (
+                <tr key={c.id} className="text-center">
+                  <td className="border p-2 font-bold">{c.id}</td>
+                  <td className="border p-2">{c.description}</td>
+                  <td className="border p-2">
+                    {c.discountValue}
+                    {c.discountType === "percentage" ? "%" : " EGP"}
+                  </td>
+                  <td className="border p-2">{c.minPurchase}</td>
+                  <td className="border p-2">{c.maxDiscount}</td>
+                  <td className="border p-2">{c.usageLimit}</td>
+                  <td className="border p-2">{c.usedCount || 0}</td>
+                  <td className="border p-2">
+                    {c.firstOrderOnly ? "Yes" : "No"}
+                  </td>
+                  <td className="border p-2">
+                    {c.expiresAt?.seconds
+                      ? new Date(c.expiresAt.seconds * 1000).toLocaleDateString()
+                      : ""}
+                  </td>
+                  <td className="border p-2">{c.active ? "Yes" : "No"}</td>
+
+                  <td className="border p-2 flex gap-2 justify-center">
+                    <button
+                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                      onClick={() =>
+                        setEditCode({
+                          ...c,
+                          expiresAt: new Date(c.expiresAt.seconds * 1000)
+                            .toISOString()
+                            .slice(0, 16),
+                        })
+                      }
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      className="bg-red-600 text-white px-3 py-1 rounded"
+                      onClick={() => handleDelete(c.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card List */}
+        <div className="md:hidden space-y-4">
+          {filtered.map((c) => (
+            <div key={c.id} className="bg-white shadow rounded p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-bold text-lg">{c.id}</h3>
+                <span
+                  className={`px-2 py-1 text-sm rounded ${
+                    c.active ? "bg-green-200" : "bg-red-200"
+                  }`}
+                >
+                  {c.active ? "Active" : "Inactive"}
+                </span>
+              </div>
+
+              <p className="text-gray-600 text-sm mb-2">{c.description}</p>
+
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <p><strong>Value:</strong> {c.discountValue}{c.discountType === "percentage" ? "%" : " EGP"}</p>
+                <p><strong>Min:</strong> {c.minPurchase}</p>
+                <p><strong>Max:</strong> {c.maxDiscount}</p>
+                <p><strong>Usage:</strong> {c.usageLimit}</p>
+                <p><strong>Used:</strong> {c.usedCount || 0}</p>
+                <p><strong>First Order:</strong> {c.firstOrderOnly ? "Yes" : "No"}</p>
+                <p>
+                  <strong>Expires:</strong>{" "}
+                  {c.expiresAt?.seconds
+                    ? new Date(c.expiresAt.seconds * 1000).toLocaleDateString()
+                    : ""}
+                </p>
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  className="flex-1 bg-yellow-500 text-white py-2 rounded"
+                  onClick={() =>
+                    setEditCode({
+                      ...c,
+                      expiresAt: new Date(c.expiresAt.seconds * 1000)
+                        .toISOString()
+                        .slice(0, 16),
+                    })
+                  }
+                >
+                  Edit
+                </button>
+
+                <button
+                  className="flex-1 bg-red-600 text-white py-2 rounded"
+                  onClick={() => handleDelete(c.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Add Modal */}
         {showAddModal && (
@@ -243,7 +303,6 @@ export default function PromoCodesPage() {
 }
 
 /* ---------------------- Modal Component ---------------------- */
-
 function PromoModal({ title, data, setData, onClose, onSave }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
@@ -254,11 +313,17 @@ function PromoModal({ title, data, setData, onClose, onSave }) {
           {renderInputs(data, setData)}
         </div>
 
-        <div className="mt-4 flex justify-end gap-3">
-          <button className="px-4 py-2 bg-gray-400 text-white rounded" onClick={onClose}>
+        <div className="mt-4 flex flex-col sm:flex-row justify-end gap-3">
+          <button
+            className="px-4 py-2 bg-gray-400 text-white rounded w-full sm:w-auto"
+            onClick={onClose}
+          >
             Cancel
           </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={onSave}>
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded w-full sm:w-auto"
+            onClick={onSave}
+          >
             Save
           </button>
         </div>
@@ -267,29 +332,27 @@ function PromoModal({ title, data, setData, onClose, onSave }) {
   );
 }
 
-/* ---------------------- Inputs Renderer ---------------------- */
-
-function renderInputs(state, setState) {
+function renderInputs(s, setS) {
   return (
     <>
       <input
         className="p-2 border rounded"
         placeholder="Code"
-        value={state.code}
-        onChange={(e) => setState({ ...state, code: e.target.value })}
+        value={s.code}
+        onChange={(e) => setS({ ...s, code: e.target.value })}
       />
 
       <input
         className="p-2 border rounded"
         placeholder="Description"
-        value={state.description}
-        onChange={(e) => setState({ ...state, description: e.target.value })}
+        value={s.description}
+        onChange={(e) => setS({ ...s, description: e.target.value })}
       />
 
       <select
         className="p-2 border rounded"
-        value={state.discountType}
-        onChange={(e) => setState({ ...state, discountType: e.target.value })}
+        value={s.discountType}
+        onChange={(e) => setS({ ...s, discountType: e.target.value })}
       >
         <option value="percentage">Percentage</option>
         <option value="fixed">Fixed (EGP)</option>
@@ -299,57 +362,57 @@ function renderInputs(state, setState) {
         type="number"
         className="p-2 border rounded"
         placeholder="Discount Value"
-        value={state.discountValue}
-        onChange={(e) => setState({ ...state, discountValue: e.target.value })}
+        value={s.discountValue}
+        onChange={(e) => setS({ ...s, discountValue: e.target.value })}
       />
 
       <input
         type="number"
         className="p-2 border rounded"
         placeholder="Min Purchase"
-        value={state.minPurchase}
-        onChange={(e) => setState({ ...state, minPurchase: e.target.value })}
+        value={s.minPurchase}
+        onChange={(e) => setS({ ...s, minPurchase: e.target.value })}
       />
 
       <input
         type="number"
         className="p-2 border rounded"
         placeholder="Max Discount"
-        value={state.maxDiscount}
-        onChange={(e) => setState({ ...state, maxDiscount: e.target.value })}
+        value={s.maxDiscount}
+        onChange={(e) => setS({ ...s, maxDiscount: e.target.value })}
       />
 
       <input
         type="number"
         className="p-2 border rounded"
         placeholder="Usage Limit"
-        value={state.usageLimit}
-        onChange={(e) => setState({ ...state, usageLimit: e.target.value })}
+        value={s.usageLimit}
+        onChange={(e) => setS({ ...s, usageLimit: e.target.value })}
       />
 
       <input
         type="datetime-local"
         className="p-2 border rounded"
-        value={state.expiresAt}
-        onChange={(e) => setState({ ...state, expiresAt: e.target.value })}
+        value={s.expiresAt}
+        onChange={(e) => setS({ ...s, expiresAt: e.target.value })}
       />
 
-      {/* First Order Only */}
       <label className="flex items-center gap-2 mt-2">
         <input
           type="checkbox"
-          checked={state.firstOrderOnly}
-          onChange={(e) => setState({ ...state, firstOrderOnly: e.target.checked })}
+          checked={s.firstOrderOnly}
+          onChange={(e) =>
+            setS({ ...s, firstOrderOnly: e.target.checked })
+          }
         />
         First Order Only
       </label>
 
-      {/* Active */}
       <label className="flex items-center gap-2 mt-2">
         <input
           type="checkbox"
-          checked={state.active}
-          onChange={(e) => setState({ ...state, active: e.target.checked })}
+          checked={s.active}
+          onChange={(e) => setS({ ...s, active: e.target.checked })}
         />
         Active
       </label>

@@ -36,7 +36,9 @@ export default function UsersPage() {
 
   const filteredUsers = users.filter(
     (user) =>
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+      `${user.firstName} ${user.lastName}`
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
       user.email?.toLowerCase().includes(search.toLowerCase()) ||
       user.phone?.toLowerCase().includes(search.toLowerCase())
   );
@@ -46,16 +48,23 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="flex">
-      <AdminSidebar />
-      <main className="flex-1 p-6 bg-gray-100">
-        <h2 className="text-3xl font-bold mb-6">Users</h2>
+    <div className="flex flex-col md:flex-row">
+      {/* Sidebar */}
+      <div className="w-full md:w-auto">
+        <AdminSidebar />
+      </div>
+
+      {/* Main */}
+      <main className="flex-1 p-4 sm:p-6 bg-gray-100 min-h-screen">
+        <h2 className="text-3xl font-bold mb-6 text-center md:text-left">
+          Users
+        </h2>
 
         {/* Search */}
         <input
           type="text"
           placeholder="Search by name, email, or phone..."
-          className="w-full p-3 mb-6 border rounded-lg shadow-sm"
+          className="w-full p-3 mb-6 border rounded-lg shadow-sm text-sm sm:text-base"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -63,19 +72,20 @@ export default function UsersPage() {
         {filteredUsers.length === 0 ? (
           <p className="text-gray-500 text-center mt-10">No users found.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredUsers.map((user) => {
               const userOrders = getOrdersForUser(user.id);
 
               return (
                 <div
                   key={user.id}
-                  className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition"
+                  className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition border"
                 >
-                  <h3 className="text-xl font-bold mb-2">
+                  <h3 className="text-xl font-bold mb-1 wrap-break-words">
                     {user.firstName} {user.lastName}
                   </h3>
-                  <p className="text-gray-600 text-sm">{user.email}</p>
+
+                  <p className="text-gray-600 text-sm break-all">{user.email}</p>
                   <p className="text-gray-600 text-sm mb-3">{user.phone}</p>
 
                   <div className="text-sm text-gray-700 space-y-1">
@@ -85,7 +95,7 @@ export default function UsersPage() {
                     <p>
                       <strong>Age:</strong> {user.age || "—"}
                     </p>
-                    <p>
+                    <p className="wrap-break-words">
                       <strong>Location:</strong> {user.location || "—"}
                     </p>
                     <p>
@@ -97,12 +107,14 @@ export default function UsersPage() {
                       {user.avgSpent?.toFixed?.(2) ?? "0"} EGP
                     </p>
                     <p>
-                      <strong>Coupons Used:</strong> {user.couponsUsedCount ?? 0}
+                      <strong>Coupons Used:</strong>{" "}
+                      {user.couponsUsedCount ?? 0}
                     </p>
                     <p>
                       <strong>Purchases Without Sale:</strong>{" "}
                       {user.purchasesWithoutSale ?? 0}
                     </p>
+
                     <p className="text-gray-500 text-xs mt-2">
                       Joined:{" "}
                       {user.createdAt
@@ -111,11 +123,13 @@ export default function UsersPage() {
                     </p>
                   </div>
 
-                  {/* Toggle orders */}
+                  {/* Expand / Collapse Orders */}
                   <div className="mt-4">
                     <button
                       onClick={() =>
-                        setExpandedUser(expandedUser === user.id ? null : user.id)
+                        setExpandedUser(
+                          expandedUser === user.id ? null : user.id
+                        )
                       }
                       className="text-blue-600 text-sm underline hover:text-blue-800"
                     >
@@ -131,7 +145,8 @@ export default function UsersPage() {
                               href={`/admin/orders/${order.id}`}
                               className="block text-blue-700 hover:underline text-sm mb-1"
                             >
-                              Order #{order.id} — {order.total?.toFixed(2) ?? 0} EGP
+                              Order #{order.id} —{" "}
+                              {order.total?.toFixed(2) ?? 0} EGP
                             </Link>
                           ))
                         ) : (

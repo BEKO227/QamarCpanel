@@ -111,6 +111,38 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+.input {
+  @apply p-2 border rounded w-full;
+}
+
+.input-sm {
+  @apply p-1 border rounded w-full;
+}
+
+.th {
+  @apply border p-2 font-semibold;
+}
+
+.td {
+  @apply border p-2;
+}
+
+.btn-blue {
+  @apply bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded;
+}
+
+.btn-gray {
+  @apply bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded;
+}
+
+.btn-yellow {
+  @apply bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded;
+}
+
+.btn-red {
+  @apply bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded;
+}
+
 
 @layer base {
   * {
