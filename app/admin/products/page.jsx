@@ -17,7 +17,7 @@ export default function ProductsPage() {
 
   const [newProduct, setNewProduct] = useState({
     title: "",
-    brand: "", // ✅ NEW
+    brand: "",
     category: "",
     description: "",
     price: "",
@@ -31,7 +31,6 @@ export default function ProductsPage() {
   });
 
   const [imageInput, setImageInput] = useState("");
-
   const [editingId, setEditingId] = useState(null);
   const [editingProduct, setEditingProduct] = useState({});
   const [editingImageInput, setEditingImageInput] = useState("");
@@ -53,9 +52,6 @@ export default function ProductsPage() {
       ...newProduct,
       price: parseFloat(newProduct.price),
       stock: parseInt(newProduct.stock || "0"),
-      isNewArrival: Boolean(newProduct.isNewArrival),
-      isOnSale: Boolean(newProduct.isOnSale),
-      isTopSeller: Boolean(newProduct.isTopSeller),
     });
 
     setProducts([...products, { id: docRef.id, ...newProduct }]);
@@ -78,19 +74,20 @@ export default function ProductsPage() {
     setImageInput("");
   };
 
-  /* Delete */
+  /* Delete product */
   const handleDelete = async (id) => {
     await deleteDoc(doc(db, "scarves", id));
     setProducts(products.filter((p) => p.id !== id));
   };
 
-  /* Edit */
+  /* Edit product */
   const handleEdit = (product) => {
     setEditingId(product.id);
     setEditingProduct({ ...product });
     setEditingImageInput("");
   };
 
+  /* Save product */
   const handleSave = async (id) => {
     await updateDoc(doc(db, "scarves", id), {
       ...editingProduct,
@@ -140,54 +137,93 @@ export default function ProductsPage() {
 
         {/* ADD PRODUCT */}
         <div className="mb-6 bg-white p-4 rounded-xl shadow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <input className="input" placeholder="Title"
+          <input
+            className="input"
+            placeholder="Title"
             value={newProduct.title}
-            onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, title: e.target.value })
+            }
           />
 
-          <input className="input" placeholder="Brand"
+          <input
+            className="input"
+            placeholder="Brand"
             value={newProduct.brand}
-            onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, brand: e.target.value })
+            }
           />
 
-          <input className="input" placeholder="Category"
+          <input
+            className="input"
+            placeholder="Category"
             value={newProduct.category}
-            onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, category: e.target.value })
+            }
           />
 
-          <input className="input" placeholder="Description"
+          <textarea
+            className="input"
+            placeholder="Description"
             value={newProduct.description}
-            onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, description: e.target.value })
+            }
           />
 
-          <input type="number" className="input" placeholder="Price"
+          <input
+            type="number"
+            className="input"
+            placeholder="Price"
             value={newProduct.price}
-            onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, price: e.target.value })
+            }
           />
 
-          <input type="number" className="input" placeholder="Stock"
+          <input
+            type="number"
+            className="input"
+            placeholder="Stock"
             value={newProduct.stock}
-            onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, stock: e.target.value })
+            }
           />
 
-          <input className="input" placeholder="Style Video URL"
+          <input
+            className="input"
+            placeholder="Style Video URL"
             value={newProduct.styleVideo}
-            onChange={(e) => setNewProduct({ ...newProduct, styleVideo: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, styleVideo: e.target.value })
+            }
           />
 
-          <input className="input" placeholder="Slug"
+          <input
+            className="input"
+            placeholder="Slug"
             value={newProduct.slug}
-            onChange={(e) => setNewProduct({ ...newProduct, slug: e.target.value })}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, slug: e.target.value })
+            }
           />
 
           {/* Images */}
           <div className="col-span-full">
             <div className="flex gap-2 mb-2">
-              <input className="input flex-1" placeholder="Image URL"
+              <input
+                className="input flex-1"
+                placeholder="Image URL"
                 value={imageInput}
                 onChange={(e) => setImageInput(e.target.value)}
               />
-              <button onClick={addImage} className="bg-blue-600 text-white px-4 rounded">
+              <button
+                onClick={addImage}
+                className="bg-blue-600 text-white px-4 rounded"
+              >
                 Add Image
               </button>
             </div>
@@ -195,9 +231,16 @@ export default function ProductsPage() {
             <div className="flex gap-2 flex-wrap">
               {newProduct.images.map((img, i) => (
                 <div key={i} className="relative w-16 h-16">
-                  <Image src={img} alt="" fill className="object-cover rounded" />
-                  <button onClick={() => removeImage(i)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs">
+                  <Image
+                    src={img}
+                    alt=""
+                    fill
+                    className="object-cover rounded"
+                  />
+                  <button
+                    onClick={() => removeImage(i)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
+                  >
                     x
                   </button>
                 </div>
@@ -205,8 +248,10 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          <button onClick={handleAdd}
-            className="col-span-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+          <button
+            onClick={handleAdd}
+            className="col-span-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+          >
             Add Product
           </button>
         </div>
@@ -217,31 +262,87 @@ export default function ProductsPage() {
             <div key={p.id} className="bg-white p-4 rounded-xl shadow">
               {editingId === p.id ? (
                 <>
-                  <input className="input mb-2" value={editingProduct.title}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })}
+                  <input
+                    className="input mb-2"
+                    value={editingProduct.title}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        title: e.target.value,
+                      })
+                    }
                   />
-                  <input className="input mb-2" value={editingProduct.brand || ""}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
+
+                  <input
+                    className="input mb-2"
+                    value={editingProduct.brand || ""}
                     placeholder="Brand"
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        brand: e.target.value,
+                      })
+                    }
                   />
 
-                  <input className="input mb-2" value={editingProduct.category}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                  <input
+                    className="input mb-2"
+                    value={editingProduct.category}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        category: e.target.value,
+                      })
+                    }
                   />
 
-                  <input className="input mb-2" type="number" value={editingProduct.price}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                  <textarea
+                    className="input mb-2"
+                    value={editingProduct.description || ""}
+                    placeholder="Description"
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        description: e.target.value,
+                      })
+                    }
                   />
 
-                  <input className="input mb-2" type="number" value={editingProduct.stock}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, stock: e.target.value })}
+                  <input
+                    className="input mb-2"
+                    type="number"
+                    value={editingProduct.price}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        price: e.target.value,
+                      })
+                    }
+                  />
+
+                  <input
+                    className="input mb-2"
+                    type="number"
+                    value={editingProduct.stock}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        stock: e.target.value,
+                      })
+                    }
                   />
 
                   <div className="flex gap-2">
-                    <button onClick={() => handleSave(p.id)} className="bg-green-600 text-white px-4 py-1 rounded">
+                    <button
+                      onClick={() => handleSave(p.id)}
+                      className="bg-green-600 text-white px-4 py-1 rounded"
+                    >
                       Save
                     </button>
-                    <button onClick={() => setEditingId(null)} className="bg-gray-400 text-white px-4 py-1 rounded">
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="bg-gray-400 text-white px-4 py-1 rounded"
+                    >
                       Cancel
                     </button>
                   </div>
@@ -249,15 +350,30 @@ export default function ProductsPage() {
               ) : (
                 <>
                   <h3 className="font-bold text-lg">{p.title}</h3>
-                  {p.brand && <p className="text-sm text-gray-500">{p.brand}</p>}
-                  <p className="text-gray-600">{p.price} EGP</p>
+                  {p.brand && (
+                    <p className="text-sm text-gray-500">{p.brand}</p>
+                  )}
+
+                  {p.description && (
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      {p.description}
+                    </p>
+                  )}
+
+                  <p className="text-gray-600 mt-1">{p.price} EGP</p>
                   <p className="text-sm">Stock: {p.stock}</p>
 
-                  <div className="flex gap-2 mt-2">
-                    <button onClick={() => handleEdit(p)} className="bg-yellow-500 text-white px-4 py-1 rounded">
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleEdit(p)}
+                      className="bg-yellow-500 text-white px-4 py-1 rounded"
+                    >
                       Edit
                     </button>
-                    <button onClick={() => handleDelete(p.id)} className="bg-red-500 text-white px-4 py-1 rounded">
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      className="bg-red-500 text-white px-4 py-1 rounded"
+                    >
                       Delete
                     </button>
                   </div>
