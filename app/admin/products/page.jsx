@@ -15,27 +15,30 @@ import AdminSidebar from "./../../components/AdminSideBar";
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
 
-  const [newProduct, setNewProduct] = useState({
+  const emptyProduct = {
     title: "",
     brand: "",
     category: "",
+    subCategory: "",
     description: "",
-    price: "",
-    stock: "",
+    price: 0,
+    stock: 0,
     images: [],
+    colors: [],
     styleVideo: "",
     isNewArrival: false,
     isOnSale: false,
     isTopSeller: false,
     slug: "",
-  });
+  };
 
+  const [newProduct, setNewProduct] = useState(emptyProduct);
   const [imageInput, setImageInput] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingProduct, setEditingProduct] = useState({});
   const [editingImageInput, setEditingImageInput] = useState("");
 
-  /* Fetch products */
+  /* ================= FETCH ================= */
   useEffect(() => {
     const fetchProducts = async () => {
       const snapshot = await getDocs(collection(db, "scarves"));
@@ -44,62 +47,79 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  /* Add product */
+  /* ================= ADD ================= */
   const handleAdd = async () => {
-    if (!newProduct.title || !newProduct.price) return;
+    if (!newProduct.title || !newProduct.price || !newProduct.category)
+      return;
 
-    const docRef = await addDoc(collection(db, "scarves"), {
+    const cleanProduct = {
       ...newProduct,
-      price: parseFloat(newProduct.price),
-      stock: parseInt(newProduct.stock || "0"),
-    });
+      price: Number(newProduct.price),
+      stock: Number(newProduct.stock || 0),
+      images: Array.isArray(newProduct.images) ? newProduct.images : [],
+      colors: Array.isArray(newProduct.colors) ? newProduct.colors : [],
+    };
 
-    setProducts([...products, { id: docRef.id, ...newProduct }]);
-
-    setNewProduct({
-      title: "",
-      brand: "",
-      category: "",
-      description: "",
-      price: "",
-      stock: "",
-      images: [],
-      styleVideo: "",
-      isNewArrival: false,
-      isOnSale: false,
-      isTopSeller: false,
-      slug: "",
-    });
-
+    const docRef = await addDoc(collection(db, "scarves"), cleanProduct);
+    setProducts([...products, { id: docRef.id, ...cleanProduct }]);
+    setNewProduct(emptyProduct);
     setImageInput("");
   };
 
-  /* Delete product */
+  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     await deleteDoc(doc(db, "scarves", id));
     setProducts(products.filter((p) => p.id !== id));
   };
 
-  /* Edit product */
+  /* ================= EDIT ================= */
   const handleEdit = (product) => {
     setEditingId(product.id);
-    setEditingProduct({ ...product });
+    setEditingProduct({
+      ...product,
+      images: Array.isArray(product.images) ? product.images : [],
+      colors: Array.isArray(product.colors) ? product.colors : [],
+    });
     setEditingImageInput("");
   };
 
-  /* Save product */
-  const handleSave = async (id) => {
-    await updateDoc(doc(db, "scarves", id), {
-      ...editingProduct,
-      price: parseFloat(editingProduct.price),
-      stock: parseInt(editingProduct.stock),
-    });
+  /* ================= SAVE ================= */
+  const handleSave = async () => {
+    if (!editingId) return;
 
-    setProducts(products.map((p) => (p.id === id ? editingProduct : p)));
+    const cleanProduct = {
+      title: editingProduct.title || "",
+      brand: editingProduct.brand || "",
+      category: editingProduct.category || "",
+      subCategory: editingProduct.subCategory || "",
+      description: editingProduct.description || "",
+      price: Number(editingProduct.price) || 0,
+      stock: Number(editingProduct.stock) || 0,
+      images: Array.isArray(editingProduct.images)
+        ? editingProduct.images.filter((i) => typeof i === "string")
+        : [],
+      colors: Array.isArray(editingProduct.colors)
+        ? editingProduct.colors.filter((c) => c.name && c.image && c.hex)
+        : [],
+      styleVideo: editingProduct.styleVideo || "",
+      isNewArrival: Boolean(editingProduct.isNewArrival),
+      isOnSale: Boolean(editingProduct.isOnSale),
+      isTopSeller: Boolean(editingProduct.isTopSeller),
+      slug: editingProduct.slug || "",
+    };
+
+    await updateDoc(doc(db, "scarves", editingId), cleanProduct);
+    setProducts(
+      products.map((p) =>
+        p.id === editingId ? { ...cleanProduct, id: editingId } : p
+      )
+    );
+
     setEditingId(null);
+    setEditingProduct({});
   };
 
-  /* Images */
+  /* ================= IMAGES ================= */
   const addImage = () => {
     if (!imageInput.trim()) return;
     setNewProduct({
@@ -128,6 +148,39 @@ export default function ProductsPage() {
       : setNewProduct({ ...newProduct, images: imgs });
   };
 
+  /* ================= COLORS ================= */
+  const addColor = (editing = false) => {
+    const colorObj = { name: "", image: "", hex: "#ffffff" };
+    if (editing) {
+      setEditingProduct({
+        ...editingProduct,
+        colors: [...editingProduct.colors, colorObj],
+      });
+    } else {
+      setNewProduct({ ...newProduct, colors: [...newProduct.colors, colorObj] });
+    }
+  };
+
+  const updateColor = (index, field, value, editing = false) => {
+    const arr = editing
+      ? [...editingProduct.colors]
+      : [...newProduct.colors];
+    arr[index][field] = value;
+    editing
+      ? setEditingProduct({ ...editingProduct, colors: arr })
+      : setNewProduct({ ...newProduct, colors: arr });
+  };
+
+  const removeColor = (index, editing = false) => {
+    const arr = editing
+      ? [...editingProduct.colors]
+      : [...newProduct.colors];
+    arr.splice(index, 1);
+    editing
+      ? setEditingProduct({ ...editingProduct, colors: arr })
+      : setNewProduct({ ...newProduct, colors: arr });
+  };
+
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
@@ -135,34 +188,19 @@ export default function ProductsPage() {
       <main className="flex-1 p-6 bg-gray-100">
         <h2 className="text-2xl font-bold mb-6">Products</h2>
 
-        {/* ADD PRODUCT */}
+        {/* ================= ADD PRODUCT ================= */}
         <div className="mb-6 bg-white p-4 rounded-xl shadow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <input
-            className="input"
-            placeholder="Title"
-            value={newProduct.title}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, title: e.target.value })
-            }
-          />
-
-          <input
-            className="input"
-            placeholder="Brand"
-            value={newProduct.brand}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, brand: e.target.value })
-            }
-          />
-
-          <input
-            className="input"
-            placeholder="Category"
-            value={newProduct.category}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, category: e.target.value })
-            }
-          />
+          {["title", "brand", "category", "subCategory", "slug"].map((f) => (
+            <input
+              key={f}
+              className="input"
+              placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
+              value={newProduct[f]}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, [f]: e.target.value })
+              }
+            />
+          ))}
 
           <textarea
             className="input"
@@ -193,25 +231,7 @@ export default function ProductsPage() {
             }
           />
 
-          <input
-            className="input"
-            placeholder="Style Video URL"
-            value={newProduct.styleVideo}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, styleVideo: e.target.value })
-            }
-          />
-
-          <input
-            className="input"
-            placeholder="Slug"
-            value={newProduct.slug}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, slug: e.target.value })
-            }
-          />
-
-          {/* Images */}
+          {/* IMAGES */}
           <div className="col-span-full">
             <div className="flex gap-2 mb-2">
               <input
@@ -224,19 +244,14 @@ export default function ProductsPage() {
                 onClick={addImage}
                 className="bg-blue-600 text-white px-4 rounded"
               >
-                Add Image
+                Add
               </button>
             </div>
 
             <div className="flex gap-2 flex-wrap">
               {newProduct.images.map((img, i) => (
                 <div key={i} className="relative w-16 h-16">
-                  <Image
-                    src={img}
-                    alt=""
-                    fill
-                    className="object-cover rounded"
-                  />
+                  <Image src={img} alt="" fill className="object-cover rounded" />
                   <button
                     onClick={() => removeImage(i)}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
@@ -248,6 +263,45 @@ export default function ProductsPage() {
             </div>
           </div>
 
+          {/* COLORS */}
+          <div className="col-span-full">
+            <button
+              onClick={() => addColor(false)}
+              className="mb-2 bg-purple-600 text-white px-4 py-1 rounded"
+            >
+              Add Color
+            </button>
+
+            {newProduct.colors.map((c, i) => (
+              <div key={i} className="flex gap-2 mb-2 items-center">
+                <input
+                  className="input flex-1"
+                  placeholder="Name"
+                  value={c.name}
+                  onChange={(e) => updateColor(i, "name", e.target.value)}
+                />
+                <input
+                  className="input flex-1"
+                  placeholder="Image URL"
+                  value={c.image}
+                  onChange={(e) => updateColor(i, "image", e.target.value)}
+                />
+                <input
+                  type="color"
+                  className="w-12 h-12 p-0 border-none"
+                  value={c.hex}
+                  onChange={(e) => updateColor(i, "hex", e.target.value)}
+                />
+                <button
+                  onClick={() => removeColor(i)}
+                  className="bg-red-500 text-white px-2 py-1 rounded"
+                >
+                  x
+                </button>
+              </div>
+            ))}
+          </div>
+
           <button
             onClick={handleAdd}
             className="col-span-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
@@ -256,50 +310,31 @@ export default function ProductsPage() {
           </button>
         </div>
 
-        {/* PRODUCT LIST */}
+        {/* ================= PRODUCT LIST ================= */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map((p) => (
             <div key={p.id} className="bg-white p-4 rounded-xl shadow">
               {editingId === p.id ? (
                 <>
-                  <input
-                    className="input mb-2"
-                    value={editingProduct.title}
-                    onChange={(e) =>
-                      setEditingProduct({
-                        ...editingProduct,
-                        title: e.target.value,
-                      })
-                    }
-                  />
-
-                  <input
-                    className="input mb-2"
-                    value={editingProduct.brand || ""}
-                    placeholder="Brand"
-                    onChange={(e) =>
-                      setEditingProduct({
-                        ...editingProduct,
-                        brand: e.target.value,
-                      })
-                    }
-                  />
-
-                  <input
-                    className="input mb-2"
-                    value={editingProduct.category}
-                    onChange={(e) =>
-                      setEditingProduct({
-                        ...editingProduct,
-                        category: e.target.value,
-                      })
-                    }
-                  />
+                  {["title", "brand", "category", "subCategory", "slug"].map(
+                    (f) => (
+                      <input
+                        key={f}
+                        className="input mb-2"
+                        value={editingProduct[f] || ""}
+                        onChange={(e) =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            [f]: e.target.value,
+                          })
+                        }
+                      />
+                    )
+                  )}
 
                   <textarea
                     className="input mb-2"
                     value={editingProduct.description || ""}
-                    placeholder="Description"
                     onChange={(e) =>
                       setEditingProduct({
                         ...editingProduct,
@@ -332,9 +367,54 @@ export default function ProductsPage() {
                     }
                   />
 
+                  {/* COLORS EDIT */}
+                  <div className="col-span-full mb-2">
+                    <button
+                      onClick={() => addColor(true)}
+                      className="mb-2 bg-purple-600 text-white px-4 py-1 rounded"
+                    >
+                      Add Color
+                    </button>
+
+                    {editingProduct.colors?.map((c, i) => (
+                      <div key={i} className="flex gap-2 mb-2 items-center">
+                        <input
+                          className="input flex-1"
+                          placeholder="Name"
+                          value={c.name}
+                          onChange={(e) =>
+                            updateColor(i, "name", e.target.value, true)
+                          }
+                        />
+                        <input
+                          className="input flex-1"
+                          placeholder="Image URL"
+                          value={c.image}
+                          onChange={(e) =>
+                            updateColor(i, "image", e.target.value, true)
+                          }
+                        />
+                        <input
+                          type="color"
+                          className="w-12 h-12 p-0 border-none"
+                          value={c.hex}
+                          onChange={(e) =>
+                            updateColor(i, "hex", e.target.value, true)
+                          }
+                        />
+                        <button
+                          onClick={() => removeColor(i, true)}
+                          className="bg-red-500 text-white px-2 py-1 rounded"
+                        >
+                          x
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleSave(p.id)}
+                      onClick={handleSave}
                       className="bg-green-600 text-white px-4 py-1 rounded"
                     >
                       Save
@@ -350,18 +430,15 @@ export default function ProductsPage() {
               ) : (
                 <>
                   <h3 className="font-bold text-lg">{p.title}</h3>
-                  {p.brand && (
-                    <p className="text-sm text-gray-500">{p.brand}</p>
-                  )}
-
-                  {p.description && (
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                      {p.description}
-                    </p>
-                  )}
-
+                  <p className="text-sm text-gray-500">{p.brand}</p>
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                    {p.description}
+                  </p>
                   <p className="text-gray-600 mt-1">{p.price} EGP</p>
                   <p className="text-sm">Stock: {p.stock}</p>
+                  <p className="text-sm">
+                    Category: {p.category} / {p.subCategory}
+                  </p>
 
                   <div className="flex gap-2 mt-3">
                     <button
