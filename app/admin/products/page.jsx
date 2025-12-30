@@ -38,7 +38,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState({});
   const [editingImageInput, setEditingImageInput] = useState("");
 
-  /* ================= FETCH ================= */
+  /* ================= FETCH PRODUCTS ================= */
   useEffect(() => {
     const fetchProducts = async () => {
       const snapshot = await getDocs(collection(db, "scarves"));
@@ -47,7 +47,7 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  /* ================= ADD ================= */
+  /* ================= ADD PRODUCT ================= */
   const handleAdd = async () => {
     if (!newProduct.title || !newProduct.price || !newProduct.category)
       return;
@@ -66,13 +66,13 @@ export default function ProductsPage() {
     setImageInput("");
   };
 
-  /* ================= DELETE ================= */
+  /* ================= DELETE PRODUCT ================= */
   const handleDelete = async (id) => {
     await deleteDoc(doc(db, "scarves", id));
     setProducts(products.filter((p) => p.id !== id));
   };
 
-  /* ================= EDIT ================= */
+  /* ================= EDIT PRODUCT ================= */
   const handleEdit = (product) => {
     setEditingId(product.id);
     setEditingProduct({
@@ -83,7 +83,7 @@ export default function ProductsPage() {
     setEditingImageInput("");
   };
 
-  /* ================= SAVE ================= */
+  /* ================= SAVE EDIT ================= */
   const handleSave = async () => {
     if (!editingId) return;
 
@@ -231,7 +231,43 @@ export default function ProductsPage() {
             }
           />
 
-          {/* IMAGES */}
+          {/* ================= CHECKBOXES ================= */}
+          <div className="flex gap-4 col-span-full">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={newProduct.isNewArrival}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, isNewArrival: e.target.checked })
+                }
+              />
+              New Arrival
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={newProduct.isOnSale}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, isOnSale: e.target.checked })
+                }
+              />
+              On Sale
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={newProduct.isTopSeller}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, isTopSeller: e.target.checked })
+                }
+              />
+              Top Seller
+            </label>
+          </div>
+
+          {/* ================= IMAGES ================= */}
           <div className="col-span-full">
             <div className="flex gap-2 mb-2">
               <input
@@ -263,7 +299,7 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* COLORS */}
+          {/* ================= COLORS ================= */}
           <div className="col-span-full">
             <button
               onClick={() => addColor(false)}
@@ -367,7 +403,52 @@ export default function ProductsPage() {
                     }
                   />
 
-                  {/* COLORS EDIT */}
+                  {/* ================= CHECKBOXES ================= */}
+                  <div className="flex gap-4 mb-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editingProduct.isNewArrival}
+                        onChange={(e) =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            isNewArrival: e.target.checked,
+                          })
+                        }
+                      />
+                      New Arrival
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editingProduct.isOnSale}
+                        onChange={(e) =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            isOnSale: e.target.checked,
+                          })
+                        }
+                      />
+                      On Sale
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editingProduct.isTopSeller}
+                        onChange={(e) =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            isTopSeller: e.target.checked,
+                          })
+                        }
+                      />
+                      Top Seller
+                    </label>
+                  </div>
+
+                  {/* ================= COLORS ================= */}
                   <div className="col-span-full mb-2">
                     <button
                       onClick={() => addColor(true)}
@@ -438,6 +519,11 @@ export default function ProductsPage() {
                   <p className="text-sm">Stock: {p.stock}</p>
                   <p className="text-sm">
                     Category: {p.category} / {p.subCategory}
+                  </p>
+                  <p className="text-sm">
+                    New: {p.isNewArrival ? "Yes" : "No"}, On Sale:{" "}
+                    {p.isOnSale ? "Yes" : "No"}, Top Seller:{" "}
+                    {p.isTopSeller ? "Yes" : "No"}
                   </p>
 
                   <div className="flex gap-2 mt-3">
