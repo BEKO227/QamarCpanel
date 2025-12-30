@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import {
   collection,
@@ -38,6 +39,20 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState({});
   const [editingImageInput, setEditingImageInput] = useState("");
 
+  // 🔎 FILTER STATES
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("all");
+
+  // 🔎 CATEGORY STRUCTURE (EDIT FREELY)
+  const categoryOptions = {
+    cotton: ["modal", "printed modal", "jel", "packet"],
+    chiffon: [],
+    silk: [],
+    bandana: [],
+    kuwaiti: ["woven", "breezy"],
+    thailand: [],
+  };
+
   /* ================= FETCH PRODUCTS ================= */
   useEffect(() => {
     const fetchProducts = async () => {
@@ -49,8 +64,7 @@ export default function ProductsPage() {
 
   /* ================= ADD PRODUCT ================= */
   const handleAdd = async () => {
-    if (!newProduct.title || !newProduct.price || !newProduct.category)
-      return;
+    if (!newProduct.title || !newProduct.price || !newProduct.category) return;
 
     const cleanProduct = {
       ...newProduct,
@@ -109,6 +123,7 @@ export default function ProductsPage() {
     };
 
     await updateDoc(doc(db, "scarves", editingId), cleanProduct);
+
     setProducts(
       products.map((p) =>
         p.id === editingId ? { ...cleanProduct, id: editingId } : p
@@ -139,9 +154,7 @@ export default function ProductsPage() {
   };
 
   const removeImage = (index, editing = false) => {
-    const imgs = editing
-      ? [...editingProduct.images]
-      : [...newProduct.images];
+    const imgs = editing ? [...editingProduct.images] : [...newProduct.images];
     imgs.splice(index, 1);
     editing
       ? setEditingProduct({ ...editingProduct, images: imgs })
@@ -162,9 +175,7 @@ export default function ProductsPage() {
   };
 
   const updateColor = (index, field, value, editing = false) => {
-    const arr = editing
-      ? [...editingProduct.colors]
-      : [...newProduct.colors];
+    const arr = editing ? [...editingProduct.colors] : [...newProduct.colors];
     arr[index][field] = value;
     editing
       ? setEditingProduct({ ...editingProduct, colors: arr })
@@ -172,9 +183,7 @@ export default function ProductsPage() {
   };
 
   const removeColor = (index, editing = false) => {
-    const arr = editing
-      ? [...editingProduct.colors]
-      : [...newProduct.colors];
+    const arr = editing ? [...editingProduct.colors] : [...newProduct.colors];
     arr.splice(index, 1);
     editing
       ? setEditingProduct({ ...editingProduct, colors: arr })
@@ -238,7 +247,10 @@ export default function ProductsPage() {
                 type="checkbox"
                 checked={newProduct.isNewArrival}
                 onChange={(e) =>
-                  setNewProduct({ ...newProduct, isNewArrival: e.target.checked })
+                  setNewProduct({
+                    ...newProduct,
+                    isNewArrival: e.target.checked,
+                  })
                 }
               />
               New Arrival
@@ -260,7 +272,10 @@ export default function ProductsPage() {
                 type="checkbox"
                 checked={newProduct.isTopSeller}
                 onChange={(e) =>
-                  setNewProduct({ ...newProduct, isTopSeller: e.target.checked })
+                  setNewProduct({
+                    ...newProduct,
+                    isTopSeller: e.target.checked,
+                  })
                 }
               />
               Top Seller
@@ -287,7 +302,12 @@ export default function ProductsPage() {
             <div className="flex gap-2 flex-wrap">
               {newProduct.images.map((img, i) => (
                 <div key={i} className="relative w-16 h-16">
-                  <Image src={img} alt="" fill className="object-cover rounded" />
+                  <Image
+                    src={img}
+                    alt=""
+                    fill
+                    className="object-cover rounded"
+                  />
                   <button
                     onClick={() => removeImage(i)}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
@@ -346,204 +366,278 @@ export default function ProductsPage() {
           </button>
         </div>
 
+        {/* ================= FILTERS ================= */}
+        <div className="bg-white p-4 rounded-xl shadow mb-6 flex gap-4 flex-wrap">
+          <select
+            className="input"
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setSelectedSubCategory("all");
+            }}
+          >
+            <option value="all">All Categories</option>
+
+            {Object.keys(categoryOptions).map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="input"
+            value={selectedSubCategory}
+            onChange={(e) => setSelectedSubCategory(e.target.value)}
+            disabled={selectedCategory === "all"}
+          >
+            <option value="all">All Sub Categories</option>
+
+            {selectedCategory !== "all" &&
+              categoryOptions[selectedCategory]?.map((sub) => (
+                <option key={sub} value={sub}>
+                  {sub}
+                </option>
+              ))}
+          </select>
+        </div>
+
         {/* ================= PRODUCT LIST ================= */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((p) => (
-            <div key={p.id} className="bg-white p-4 rounded-xl shadow">
-              {editingId === p.id ? (
-                <>
-                  {["title", "brand", "category", "subCategory", "slug"].map(
-                    (f) => (
-                      <input
-                        key={f}
-                        className="input mb-2"
-                        value={editingProduct[f] || ""}
-                        onChange={(e) =>
-                          setEditingProduct({
-                            ...editingProduct,
-                            [f]: e.target.value,
-                          })
-                        }
-                      />
-                    )
-                  )}
-
-                  <textarea
-                    className="input mb-2"
-                    value={editingProduct.description || ""}
-                    onChange={(e) =>
-                      setEditingProduct({
-                        ...editingProduct,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-
-                  <input
-                    className="input mb-2"
-                    type="number"
-                    value={editingProduct.price}
-                    onChange={(e) =>
-                      setEditingProduct({
-                        ...editingProduct,
-                        price: e.target.value,
-                      })
-                    }
-                  />
-
-                  <input
-                    className="input mb-2"
-                    type="number"
-                    value={editingProduct.stock}
-                    onChange={(e) =>
-                      setEditingProduct({
-                        ...editingProduct,
-                        stock: e.target.value,
-                      })
-                    }
-                  />
-
-                  {/* ================= CHECKBOXES ================= */}
-                  <div className="flex gap-4 mb-2">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editingProduct.isNewArrival}
-                        onChange={(e) =>
-                          setEditingProduct({
-                            ...editingProduct,
-                            isNewArrival: e.target.checked,
-                          })
-                        }
-                      />
-                      New Arrival
-                    </label>
-
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editingProduct.isOnSale}
-                        onChange={(e) =>
-                          setEditingProduct({
-                            ...editingProduct,
-                            isOnSale: e.target.checked,
-                          })
-                        }
-                      />
-                      On Sale
-                    </label>
-
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editingProduct.isTopSeller}
-                        onChange={(e) =>
-                          setEditingProduct({
-                            ...editingProduct,
-                            isTopSeller: e.target.checked,
-                          })
-                        }
-                      />
-                      Top Seller
-                    </label>
-                  </div>
-
-                  {/* ================= COLORS ================= */}
-                  <div className="col-span-full mb-2">
-                    <button
-                      onClick={() => addColor(true)}
-                      className="mb-2 bg-purple-600 text-white px-4 py-1 rounded"
-                    >
-                      Add Color
-                    </button>
-
-                    {editingProduct.colors?.map((c, i) => (
-                      <div key={i} className="flex gap-2 mb-2 items-center">
+          {products
+            .filter((p) =>
+              selectedCategory === "all"
+                ? true
+                : (p.category || "").toLowerCase() === selectedCategory
+            )
+            .filter((p) =>
+              selectedSubCategory === "all"
+                ? true
+                : (p.subCategory || "").toLowerCase() === selectedSubCategory
+            )
+            .map((p) => (
+              <div key={p.id} className="bg-white p-4 rounded-xl shadow">
+                {editingId === p.id ? (
+                  <>
+                    {["title", "brand", "category", "subCategory", "slug"].map(
+                      (f) => (
                         <input
-                          className="input flex-1"
-                          placeholder="Name"
-                          value={c.name}
+                          key={f}
+                          className="input mb-2"
+                          value={editingProduct[f] || ""}
                           onChange={(e) =>
-                            updateColor(i, "name", e.target.value, true)
+                            setEditingProduct({
+                              ...editingProduct,
+                              [f]: e.target.value,
+                            })
                           }
                         />
+                      )
+                    )}
+
+                    <textarea
+                      className="input mb-2"
+                      value={editingProduct.description || ""}
+                      onChange={(e) =>
+                        setEditingProduct({
+                          ...editingProduct,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+
+                    <input
+                      className="input mb-2"
+                      type="number"
+                      value={editingProduct.price}
+                      onChange={(e) =>
+                        setEditingProduct({
+                          ...editingProduct,
+                          price: e.target.value,
+                        })
+                      }
+                    />
+
+                    <input
+                      className="input mb-2"
+                      type="number"
+                      value={editingProduct.stock}
+                      onChange={(e) =>
+                        setEditingProduct({
+                          ...editingProduct,
+                          stock: e.target.value,
+                        })
+                      }
+                    />
+
+                    {/* CHECKBOXES */}
+                    <div className="flex gap-4 mb-2">
+                      <label className="flex items-center gap-2">
                         <input
-                          className="input flex-1"
-                          placeholder="Image URL"
-                          value={c.image}
+                          type="checkbox"
+                          checked={editingProduct.isNewArrival}
                           onChange={(e) =>
-                            updateColor(i, "image", e.target.value, true)
+                            setEditingProduct({
+                              ...editingProduct,
+                              isNewArrival: e.target.checked,
+                            })
                           }
                         />
+                        New Arrival
+                      </label>
+
+                      <label className="flex items-center gap-2">
                         <input
-                          type="color"
-                          className="w-12 h-12 p-0 border-none"
-                          value={c.hex}
+                          type="checkbox"
+                          checked={editingProduct.isOnSale}
                           onChange={(e) =>
-                            updateColor(i, "hex", e.target.value, true)
+                            setEditingProduct({
+                              ...editingProduct,
+                              isOnSale: e.target.checked,
+                            })
                           }
                         />
-                        <button
-                          onClick={() => removeColor(i, true)}
-                          className="bg-red-500 text-white px-2 py-1 rounded"
+                        On Sale
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={editingProduct.isTopSeller}
+                          onChange={(e) =>
+                            setEditingProduct({
+                              ...editingProduct,
+                              isTopSeller: e.target.checked,
+                            })
+                          }
+                        />
+                        Top Seller
+                      </label>
+                    </div>
+
+                    {/* COLORS */}
+                    <div className="col-span-full mb-2">
+                      <button
+                        onClick={() => addColor(true)}
+                        className="mb-2 bg-purple-600 text-white px-4 py-1 rounded"
+                      >
+                        Add Color
+                      </button>
+
+                      {editingProduct.colors?.map((c, i) => (
+                        <div
+                          key={i}
+                          className="flex gap-2 mb-2 items-center"
                         >
-                          x
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                          <input
+                            className="input flex-1"
+                            placeholder="Name"
+                            value={c.name}
+                            onChange={(e) =>
+                              updateColor(i, "name", e.target.value, true)
+                            }
+                          />
+                          <input
+                            className="input flex-1"
+                            placeholder="Image URL"
+                            value={c.image}
+                            onChange={(e) =>
+                              updateColor(i, "image", e.target.value, true)
+                            }
+                          />
+                          <input
+                            type="color"
+                            className="w-12 h-12 p-0 border-none"
+                            value={c.hex}
+                            onChange={(e) =>
+                              updateColor(i, "hex", e.target.value, true)
+                            }
+                          />
+                          <button
+                            onClick={() => removeColor(i, true)}
+                            className="bg-red-500 text-white px-2 py-1 rounded"
+                          >
+                            x
+                          </button>
+                        </div>
+                      ))}
+                    </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSave}
-                      className="bg-green-600 text-white px-4 py-1 rounded"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="bg-gray-400 text-white px-4 py-1 rounded"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3 className="font-bold text-lg">{p.title}</h3>
-                  <p className="text-sm text-gray-500">{p.brand}</p>
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                    {p.description}
-                  </p>
-                  <p className="text-gray-600 mt-1">{p.price} EGP</p>
-                  <p className="text-sm">Stock: {p.stock}</p>
-                  <p className="text-sm">
-                    Category: {p.category} / {p.subCategory}
-                  </p>
-                  <p className="text-sm">
-                    New: {p.isNewArrival ? "Yes" : "No"}, On Sale:{" "}
-                    {p.isOnSale ? "Yes" : "No"}, Top Seller:{" "}
-                    {p.isTopSeller ? "Yes" : "No"}
-                  </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        className="bg-green-600 text-white px-4 py-1 rounded"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-400 text-white px-4 py-1 rounded"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-bold text-lg">{p.title}</h3>
 
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => handleEdit(p)}
-                      className="bg-yellow-500 text-white px-4 py-1 rounded"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="bg-red-500 text-white px-4 py-1 rounded"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+                    <p className="text-sm text-gray-500">{p.brand}</p>
+
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      {p.description}
+                    </p>
+
+                    {/* IMAGES */}
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {p.images?.slice(0, 4).map((img, i) => (
+                        <div
+                          key={i}
+                          className="relative w-16 h-16 rounded overflow-hidden border"
+                        >
+                          <Image
+                            src={img}
+                            alt={p.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-gray-600 mt-2">{p.price} EGP</p>
+
+                    <p className="text-sm">Stock: {p.stock}</p>
+
+                    <p className="text-sm">
+                      Category: {p.category} / {p.subCategory}
+                    </p>
+
+                    <p className="text-sm">
+                      New: {p.isNewArrival ? "Yes" : "No"}, On Sale:{" "}
+                      {p.isOnSale ? "Yes" : "No"}, Top Seller:{" "}
+                      {p.isTopSeller ? "Yes" : "No"}
+                    </p>
+
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => handleEdit(p)}
+                        className="bg-yellow-500 text-white px-4 py-1 rounded"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        className="bg-red-500 text-white px-4 py-1 rounded"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
         </div>
       </main>
     </div>
