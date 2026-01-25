@@ -37,24 +37,8 @@ export default function ProductsPage() {
   const [imageInput, setImageInput] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingProduct, setEditingProduct] = useState({});
-  const [editingImageInput, setEditingImageInput] = useState("");
 
-  // 🔎 FILTER STATES
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedSubCategory, setSelectedSubCategory] = useState("all");
-
-  // 🔎 CATEGORY STRUCTURE (EDIT FREELY)
-  const categoryOptions = {
-    cotton: ["modal", "printed modal", "jel", "packet"],
-    chiffon: [],
-    silk: [],
-    bandana: [],
-    kuwaiti: ["woven", "breezy"],
-    thailand: [],
-    shawls: [],
-  };
-
-  /* ================= FETCH PRODUCTS ================= */
+  // Fetch products from Firestore
   useEffect(() => {
     const fetchProducts = async () => {
       const snapshot = await getDocs(collection(db, "scarves"));
@@ -193,131 +177,45 @@ export default function ProductsPage() {
 
   return (
     <div className="flex min-h-screen">
-      <AdminSidebar className="hidden md:block" />
-
-      <main className="flex-1 p-6 bg-gray-100">
+      <AdminSidebar />
+  
+      <main className="flex-1 p-4 sm:p-6 bg-gray-100">
         <h2 className="text-2xl font-bold mb-6">Products</h2>
-
-        {/* ================= ADD PRODUCT ================= */}
-        <div className="mb-6 bg-white p-4 rounded-xl shadow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {["title", "brand", "category", "subCategory", "slug"].map((f) => (
-            <input
-              key={f}
-              className="input"
-              placeholder={f.charAt(0).toUpperCase() + f.slice(1)}
-              value={newProduct[f]}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, [f]: e.target.value })
-              }
-            />
-          ))}
-
-          <textarea
-            className="input"
-            placeholder="Description"
-            value={newProduct.description}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, description: e.target.value })
-            }
-          />
-
-          <input
-            type="number"
-            className="input"
-            placeholder="Price"
-            value={newProduct.price}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, price: e.target.value })
-            }
-          />
-
-          <input
-            type="number"
-            className="input"
-            placeholder="Stock"
-            value={newProduct.stock}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, stock: e.target.value })
-            }
-          />
-
-          {/* ================= CHECKBOXES ================= */}
-          <div className="flex flex-col sm:flex-row gap-3 col-span-full">
-          <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={newProduct.isNewArrival}
-                onChange={(e) =>
-                  setNewProduct({
-                    ...newProduct,
-                    isNewArrival: e.target.checked,
-                  })
-                }
-              />
-              New Arrival
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={newProduct.isOnSale}
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, isOnSale: e.target.checked })
-                }
-              />
-              On Sale
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={newProduct.isTopSeller}
-                onChange={(e) =>
-                  setNewProduct({
-                    ...newProduct,
-                    isTopSeller: e.target.checked,
-                  })
-                }
-              />
-              Top Seller
-            </label>
+  
+        {/* Add Product Form */}
+        <div className="mb-6 bg-white p-4 rounded-xl shadow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <input type="text" placeholder="Title" className="input" value={newProduct.title}
+            onChange={e => setNewProduct({ ...newProduct, title: e.target.value })} />
+  
+          <input type="number" placeholder="Price" className="input" value={newProduct.price}
+            onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} />
+  
+          <input type="number" placeholder="Stock" className="input" value={newProduct.stock}
+            onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })} />
+  
+          <input type="text" placeholder="Image URL" className="input" value={newProduct.imageCover}
+            onChange={e => setNewProduct({ ...newProduct, imageCover: e.target.value })} />
+  
+          <input type="text" placeholder="Description" className="input" value={newProduct.description}
+            onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
+  
+          <input type="text" placeholder="Style Video URL" className="input" value={newProduct.styleVideo}
+            onChange={e => setNewProduct({ ...newProduct, styleVideo: e.target.value })} />
+  
+          <input type="text" placeholder="Slug" className="input" value={newProduct.slug}
+            onChange={e => setNewProduct({ ...newProduct, slug: e.target.value })} />
+  
+          {/* Checkboxes */}
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={newProduct.isNewArrival}
+              onChange={e => setNewProduct({ ...newProduct, isNewArrival: e.target.checked })} />
+            <span>New Arrival</span>
           </div>
-
-          {/* ================= IMAGES ================= */}
-          <div className="col-span-full">
-            <div className="flex gap-2 mb-2">
-              <input
-                className="input flex-1"
-                placeholder="Image URL"
-                value={imageInput}
-                onChange={(e) => setImageInput(e.target.value)}
-              />
-              <button
-                onClick={addImage}
-                className="bg-blue-600 text-white px-4 rounded"
-              >
-                Add
-              </button>
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-              {newProduct.images.map((img, i) => (
-                <div className="relative w-14 h-14 sm:w-16 sm:h-16">
-                <Image
-                    src={img}
-                    alt=""
-                    fill
-                    className="object-cover rounded"
-                  />
-                  <button
-                    onClick={() => removeImage(i)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
-                  >
-                    x
-                  </button>
-                </div>
-              ))}
-            </div>
+  
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={newProduct.isOnSale}
+              onChange={e => setNewProduct({ ...newProduct, isOnSale: e.target.checked })} />
+            <span>On Sale</span>
           </div>
 
           {/* ================= COLORS ================= */}
@@ -366,280 +264,105 @@ export default function ProductsPage() {
             Add Product
           </button>
         </div>
-
-        {/* ================= FILTERS ================= */}
-        <div className="bg-white p-4 rounded-xl shadow mb-6 flex flex-col sm:flex-row gap-3">
-        <select
-            className="input"
-            value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              setSelectedSubCategory("all");
-            }}
-          >
-            <option value="all">All Categories</option>
-
-            {Object.keys(categoryOptions).map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="input"
-            value={selectedSubCategory}
-            onChange={(e) => setSelectedSubCategory(e.target.value)}
-            disabled={selectedCategory === "all"}
-          >
-            <option value="all">All Sub Categories</option>
-
-            {selectedCategory !== "all" &&
-              categoryOptions[selectedCategory]?.map((sub) => (
-                <option key={sub} value={sub}>
-                  {sub}
-                </option>
-              ))}
-          </select>
-        </div>
-
-        {/* ================= PRODUCT LIST ================= */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products
-            .filter((p) =>
-              selectedCategory === "all"
-                ? true
-                : (p.category || "").toLowerCase() === selectedCategory
-            )
-            .filter((p) =>
-              selectedSubCategory === "all"
-                ? true
-                : (p.subCategory || "").toLowerCase() === selectedSubCategory
-            )
-            .map((p) => (
-              <div key={p.id} className="bg-white p-4 rounded-xl shadow">
-                {editingId === p.id ? (
-                  <>
-                    {["title", "brand", "category", "subCategory", "slug"].map(
-                      (f) => (
-                        <input
-                          key={f}
-                          className="input mb-2"
-                          value={editingProduct[f] || ""}
-                          onChange={(e) =>
-                            setEditingProduct({
-                              ...editingProduct,
-                              [f]: e.target.value,
-                            })
-                          }
-                        />
-                      )
-                    )}
-
-                    <textarea
-                      className="input mb-2"
-                      value={editingProduct.description || ""}
-                      onChange={(e) =>
-                        setEditingProduct({
-                          ...editingProduct,
-                          description: e.target.value,
-                        })
-                      }
-                    />
-
-                    <input
-                      className="input mb-2"
-                      type="number"
-                      value={editingProduct.price}
-                      onChange={(e) =>
-                        setEditingProduct({
-                          ...editingProduct,
-                          price: e.target.value,
-                        })
-                      }
-                    />
-
-                    <input
-                      className="input mb-2"
-                      type="number"
-                      value={editingProduct.stock}
-                      onChange={(e) =>
-                        setEditingProduct({
-                          ...editingProduct,
-                          stock: e.target.value,
-                        })
-                      }
-                    />
-
-                    {/* CHECKBOXES */}
-                    <div className="flex gap-4 mb-2">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={editingProduct.isNewArrival}
-                          onChange={(e) =>
-                            setEditingProduct({
-                              ...editingProduct,
-                              isNewArrival: e.target.checked,
-                            })
-                          }
-                        />
-                        New Arrival
-                      </label>
-
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={editingProduct.isOnSale}
-                          onChange={(e) =>
-                            setEditingProduct({
-                              ...editingProduct,
-                              isOnSale: e.target.checked,
-                            })
-                          }
-                        />
-                        On Sale
-                      </label>
-
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={editingProduct.isTopSeller}
-                          onChange={(e) =>
-                            setEditingProduct({
-                              ...editingProduct,
-                              isTopSeller: e.target.checked,
-                            })
-                          }
-                        />
-                        Top Seller
-                      </label>
-                    </div>
-
-                    {/* COLORS */}
-                    <div className="col-span-full mb-2">
-                      <button
-                        onClick={() => addColor(true)}
-                        className="mb-2 bg-purple-600 text-white px-4 py-1 rounded"
-                      >
-                        Add Color
-                      </button>
-
-                      {editingProduct.colors?.map((c, i) => (
-                        <div
-                          key={i}
-                          className="flex gap-2 mb-2 items-center"
-                        >
-                          <input
-                            className="input flex-1"
-                            placeholder="Name"
-                            value={c.name}
-                            onChange={(e) =>
-                              updateColor(i, "name", e.target.value, true)
-                            }
-                          />
-                          <input
-                            className="input flex-1"
-                            placeholder="Image URL"
-                            value={c.image}
-                            onChange={(e) =>
-                              updateColor(i, "image", e.target.value, true)
-                            }
-                          />
-                          <input
-                            type="color"
-                            className="w-12 h-12 p-0 border-none"
-                            value={c.hex}
-                            onChange={(e) =>
-                              updateColor(i, "hex", e.target.value, true)
-                            }
-                          />
-                          <button
-                            onClick={() => removeColor(i, true)}
-                            className="bg-red-500 text-white px-2 py-1 rounded"
-                          >
-                            x
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSave}
-                        className="bg-green-600 text-white px-4 py-1 rounded"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="bg-gray-400 text-white px-4 py-1 rounded"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="font-bold text-lg">{p.title}</h3>
-
-                    <p className="text-sm text-gray-500">{p.brand}</p>
-
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                      {p.description}
-                    </p>
-
-                    {/* IMAGES */}
-                    <div className="flex gap-2 mt-3 flex-wrap">
-                      {p.images?.slice(0, 4).map((img, i) => (
-                        <div
-                          key={i}
-                          className="relative w-16 h-16 rounded overflow-hidden border"
-                        >
-                          <Image
-                            src={img}
-                            alt={p.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="text-gray-600 mt-2">{p.price} EGP</p>
-
-                    <p className="text-sm">Stock: {p.stock}</p>
-
-                    <p className="text-sm hidden sm:block">
-                      Category: {p.category} / {p.subCategory}
-                    </p>
-
-
-                    <p className="text-sm">
-                      New: {p.isNewArrival ? "Yes" : "No"}, On Sale:{" "}
-                      {p.isOnSale ? "Yes" : "No"}, Top Seller:{" "}
-                      {p.isTopSeller ? "Yes" : "No"}
-                    </p>
-
-                    <div className="flex flex-col sm:flex-row gap-2 mt-3">
-                    <button
-                        onClick={() => handleEdit(p)}
-                        className="bg-yellow-500 text-white px-4 py-1 rounded"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        className="bg-red-500 text-white px-4 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </>
-                )}
+  
+        {/* ---------- MOBILE (CARD VIEW) ---------- */}
+        <div className="grid sm:hidden gap-4">
+          {products.map((p) => (
+            <div key={p.id} className="bg-white p-4 rounded-xl shadow">
+              <div className="flex gap-3">
+                <Image src={p.imageCover} alt={p.title} width={80} height={80} className="rounded" />
+                <div className="flex-1">
+                  <h3 className="font-bold">{p.title}</h3>
+                  <p className="text-gray-600">{p.price} EGP</p>
+                  <p className="text-sm text-gray-500">Stock: {p.stock}</p>
+                </div>
               </div>
-            ))}
+  
+              <div className="mt-3 flex gap-2">
+                <button
+                  className="flex-1 bg-yellow-500 text-white py-1 rounded"
+                  onClick={() => handleEdit(p)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="flex-1 bg-red-500 text-white py-1 rounded"
+                  onClick={() => handleDelete(p.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+  
+        {/* ---------- DESKTOP (TABLE VIEW) ---------- */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full table-auto border-collapse border border-gray-300 bg-white rounded-xl shadow">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="th">Image</th>
+                <th className="th">Title</th>
+                <th className="th">Price</th>
+                <th className="th">Stock</th>
+                <th className="th">New Arrival</th>
+                <th className="th">On Sale</th>
+                <th className="th">Top Seller</th>
+                <th className="th">Slug</th>
+                <th className="th">Actions</th>
+              </tr>
+            </thead>
+  
+            <tbody>
+              {products.map((p) => (
+                <tr key={p.id} className="text-center border-t">
+                  <td className="td">
+                    {p.imageCover && <Image src={p.imageCover} alt={p.title} width={50} height={50} />}
+                  </td>
+  
+                  <td className="td">
+                    {editingId === p.id ? (
+                      <input value={editingProduct.title} onChange={(e) =>
+                        setEditingProduct({ ...editingProduct, title: e.target.value })} className="input-sm" />
+                    ) : p.title}
+                  </td>
+  
+                  <td className="td">
+                    {editingId === p.id ? (
+                      <input type="number" value={editingProduct.price} onChange={(e) =>
+                        setEditingProduct({ ...editingProduct, price: e.target.value })} className="input-sm" />
+                    ) : p.price}
+                  </td>
+  
+                  <td className="td">
+                    {editingId === p.id ? (
+                      <input type="number" value={editingProduct.stock} onChange={(e) =>
+                        setEditingProduct({ ...editingProduct, stock: e.target.value })} className="input-sm" />
+                    ) : p.stock}
+                  </td>
+  
+                  <td className="td">{p.isNewArrival ? "Yes" : "No"}</td>
+                  <td className="td">{p.isOnSale ? "Yes" : "No"}</td>
+                  <td className="td">{p.isTopSeller ? "Yes" : "No"}</td>
+                  <td className="td">{p.slug}</td>
+  
+                  <td className="td">
+                    {editingId === p.id ? (
+                      <div className="flex gap-2 justify-center">
+                        <button className="btn-blue" onClick={() => handleSave(p.id)}>Save</button>
+                        <button className="btn-gray" onClick={() => setEditingId(null)}>Cancel</button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 justify-center">
+                        <button className="btn-yellow" onClick={() => handleEdit(p)}>Edit</button>
+                        <button className="btn-red" onClick={() => handleDelete(p.id)}>Delete</button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </main>
     </div>
