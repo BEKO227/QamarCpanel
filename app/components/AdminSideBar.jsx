@@ -27,18 +27,34 @@ export default function AdminSidebar() {
     { href: "/admin/Sale", label: "Sale", icon: <Percent className="w-5 h-5" /> },
   ];
 
-  /* Prevent background scroll on mobile when open */
+  /* Lock body scroll on mobile when sidebar is open */
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
   }, [isOpen]);
+
+  /* Close sidebar on route change */
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  /* Reset sidebar when switching to desktop */
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <>
       {/* Mobile Header */}
       <div className="md:hidden sticky top-0 z-50 p-3 bg-blue-950 text-white flex items-center justify-between">
         <button onClick={() => setIsOpen((prev) => !prev)}>
-          <Menu className="w-6 h-6" />
+          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
@@ -57,7 +73,7 @@ export default function AdminSidebar() {
         transform transition-transform duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
-        {/* Mobile Close Button */}
+        {/* Mobile Header inside Sidebar */}
         <div className="flex items-center justify-between md:hidden mb-6">
           <h2 className="font-bold text-lg">Qamar Admin</h2>
           <button onClick={() => setIsOpen(false)}>
@@ -80,7 +96,6 @@ export default function AdminSidebar() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-3 px-3 py-3 rounded-lg transition
                   ${
                     isActive
