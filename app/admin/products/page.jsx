@@ -23,7 +23,7 @@ export default function ProductsPage() {
     subCategory: "",
     description: "",
     price: 0,
-    stock: 0,
+    stock: 0, // total stock from colors
     images: [],
     colors: [],
     styleVideo: "",
@@ -43,7 +43,7 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubCategory, setSelectedSubCategory] = useState("all");
 
-  // 🔎 CATEGORY STRUCTURE (EDIT FREELY)
+  // 🔎 CATEGORY STRUCTURE
   const categoryOptions = {
     cotton: ["modal", "printed modal", "jel", "packet"],
     chiffon: [],
@@ -70,7 +70,7 @@ export default function ProductsPage() {
     const cleanProduct = {
       ...newProduct,
       price: Number(newProduct.price),
-      stock: Number(newProduct.stock || 0),
+      stock: newProduct.colors.reduce((sum, c) => sum + (Number(c.stock) || 0), 0), // auto stock
       images: Array.isArray(newProduct.images) ? newProduct.images : [],
       colors: Array.isArray(newProduct.colors) ? newProduct.colors : [],
     };
@@ -109,7 +109,10 @@ export default function ProductsPage() {
       subCategory: editingProduct.subCategory || "",
       description: editingProduct.description || "",
       price: Number(editingProduct.price) || 0,
-      stock: Number(editingProduct.stock) || 0,
+      stock: editingProduct.colors.reduce(
+        (sum, c) => sum + (Number(c.stock) || 0),
+        0
+      ), // auto stock
       images: Array.isArray(editingProduct.images)
         ? editingProduct.images.filter((i) => typeof i === "string")
         : [],
@@ -164,7 +167,7 @@ export default function ProductsPage() {
 
   /* ================= COLORS ================= */
   const addColor = (editing = false) => {
-    const colorObj = { name: "", image: "", hex: "#ffffff" };
+    const colorObj = { name: "", image: "", hex: "#ffffff", stock: 0 };
     if (editing) {
       setEditingProduct({
         ...editingProduct,
@@ -178,29 +181,39 @@ export default function ProductsPage() {
   const updateColor = (index, field, value, editing = false) => {
     const arr = editing ? [...editingProduct.colors] : [...newProduct.colors];
     arr[index][field] = value;
-    editing
-      ? setEditingProduct({ ...editingProduct, colors: arr })
-      : setNewProduct({ ...newProduct, colors: arr });
+
+    const newStock = arr.reduce((sum, c) => sum + (Number(c.stock) || 0), 0);
+
+    if (editing) {
+      setEditingProduct({ ...editingProduct, colors: arr, stock: newStock });
+    } else {
+      setNewProduct({ ...newProduct, colors: arr, stock: newStock });
+    }
   };
 
   const removeColor = (index, editing = false) => {
     const arr = editing ? [...editingProduct.colors] : [...newProduct.colors];
     arr.splice(index, 1);
-    editing
-      ? setEditingProduct({ ...editingProduct, colors: arr })
-      : setNewProduct({ ...newProduct, colors: arr });
+
+    const newStock = arr.reduce((sum, c) => sum + (Number(c.stock) || 0), 0);
+
+    if (editing) {
+      setEditingProduct({ ...editingProduct, colors: arr, stock: newStock });
+    } else {
+      setNewProduct({ ...newProduct, colors: arr, stock: newStock });
+    }
   };
 
   return (
     <div className="flex min-h-screen">
-        <AdminSidebar className="hidden md:block" />
-        
+      <AdminSidebar className="hidden md:block" />
+
       <main className="flex-1 p-6 bg-gray-100">
         <h2 className="text-2xl font-bold mb-6">Products</h2>
 
         {/* ================= ADD PRODUCT ================= */}
         <div className="mb-6 bg-white p-4 rounded-xl shadow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {["title", "brand", "category", "subCategory", "slug"].map((f) => (
+          {["title", "brand", "category", "subCategory", "slug"].map((f) => (
             <input
               key={f}
               className="input"
@@ -231,14 +244,13 @@ export default function ProductsPage() {
             }
           />
 
+          {/* show total stock as read-only */}
           <input
             type="number"
             className="input"
-            placeholder="Stock"
+            placeholder="Stock (sum of colors)"
             value={newProduct.stock}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, stock: e.target.value })
-            }
+            readOnly
           />
 
           {/* ================= CHECKBOXES ================= */}
@@ -303,7 +315,7 @@ export default function ProductsPage() {
             <div className="flex gap-2 flex-wrap">
               {newProduct.images.map((img, i) => (
                 <div key={i} className="relative w-14 h-14 sm:w-16 sm:h-16">
-                <Image
+                  <Image
                     src={img}
                     alt=""
                     fill
@@ -348,6 +360,15 @@ export default function ProductsPage() {
                   className="w-12 h-12 p-0 border-none"
                   value={c.hex}
                   onChange={(e) => updateColor(i, "hex", e.target.value)}
+                />
+                <input
+                  type="number"
+                  className="input w-20"
+                  placeholder="Stock"
+                  value={c.stock}
+                  onChange={(e) =>
+                    updateColor(i, "stock", Number(e.target.value))
+                  }
                 />
                 <button
                   onClick={() => removeColor(i)}
@@ -459,16 +480,12 @@ export default function ProductsPage() {
                       }
                     />
 
+                    {/* SHOW TOTAL STOCK */}
                     <input
-                      className="input mb-2"
                       type="number"
+                      className="input mb-2"
                       value={editingProduct.stock}
-                      onChange={(e) =>
-                        setEditingProduct({
-                          ...editingProduct,
-                          stock: e.target.value,
-                        })
-                      }
+                      readOnly
                     />
 
                     {/* CHECKBOXES */}
@@ -526,10 +543,7 @@ export default function ProductsPage() {
                       </button>
 
                       {editingProduct.colors?.map((c, i) => (
-                        <div
-                          key={i}
-                          className="flex gap-2 mb-2 items-center"
-                        >
+                        <div key={i} className="flex gap-2 mb-2 items-center">
                           <input
                             className="input flex-1"
                             placeholder="Name"
@@ -552,6 +566,15 @@ export default function ProductsPage() {
                             value={c.hex}
                             onChange={(e) =>
                               updateColor(i, "hex", e.target.value, true)
+                            }
+                          />
+                          <input
+                            type="number"
+                            className="input w-20"
+                            placeholder="Stock"
+                            value={c.stock}
+                            onChange={(e) =>
+                              updateColor(i, "stock", Number(e.target.value), true)
                             }
                           />
                           <button
@@ -644,4 +667,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
