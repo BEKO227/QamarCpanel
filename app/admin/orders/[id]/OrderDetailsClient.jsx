@@ -1,28 +1,58 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import Image from "next/image";
 
 export default function OrderDetailsClient({ id }) {
   const [order, setOrder] = useState(null);
+  const invoiceRef = useRef();
+
+  // Safely handle product color dots
+  const safeColor = (color) => {
+    if (!color) return "#ccc";
+    if (color.includes("lab") || color.includes("oklch") || color.includes("lch")) return "#000000";
+    return color;
+  };
+
+  const generatePDF = async () => {
+    if (!invoiceRef.current) return;
+
+    // Clone invoice to avoid modifying live DOM
+    const clone = invoiceRef.current.cloneNode(true);
+
+    // Dynamically import html2pdf
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    const opt = {
+      margin: 0.5,
+      filename: `Invoice-${id}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        ignoreElements: (el) => el.classList?.contains("exclude-from-pdf"),
+      },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    };
+
+    html2pdf().set(opt).from(clone).save();
+  };
 
   useEffect(() => {
+    if (!id) return;
+
     const fetchOrder = async () => {
       const orderRef = doc(db, "orders", id);
       const orderSnap = await getDoc(orderRef);
-
       if (!orderSnap.exists()) return;
 
-      const orderData = orderSnap.data();
+      const orderData = { id: orderSnap.id, ...orderSnap.data() };
 
-      // 🔥 Fetch user email if userId exists
       if (orderData.userId) {
         const userRef = doc(db, "users", orderData.userId);
         const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          orderData.user = userSnap.data(); // contains email
-        }
+        if (userSnap.exists()) orderData.user = userSnap.data();
       }
 
       setOrder(orderData);
@@ -31,152 +61,102 @@ export default function OrderDetailsClient({ id }) {
     fetchOrder();
   }, [id]);
 
-  if (!order)
-    return (
-      <p className="text-center mt-20 text-gray-500">
-        Loading order...
-      </p>
-    );
-
-  const printInvoice = () => window.print();
-
-  const timelineStages = [
-    "pending",
-    "waiting_for_payment",
-    "processing",
-    "shipped",
-    "delivered",
-  ];
-  const stageIndex = timelineStages.indexOf(order.status);
+  if (!id || !order)
+    return <p className="text-center mt-20 text-gray-500">Loading order...</p>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Order Header */}
-      <div className="bg-white p-5 rounded-xl shadow">
-        <h2 className="text-2xl font-bold">Order #{id}</h2>
-        <p className="text-gray-600">
-          Placed on{" "}
-          {order.createdAt?.seconds
-            ? new Date(order.createdAt.seconds * 1000).toLocaleString()
-            : "N/A"}
-        </p>
-
-        <button
-          onClick={printInvoice}
-          className="mt-4 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900"
-        >
-          🧾 Print Invoice
-        </button>
-      </div>
-
-      {/* Customer Info */}
-      <div className="bg-white p-5 rounded-xl shadow">
-        <h3 className="text-xl font-semibold mb-3">Customer Info</h3>
-
-        <div className="space-y-1 text-gray-700">
-          <p>
-            <span className="font-semibold">Name:</span>{" "}
-            {order.firstName} {order.lastName}
-          </p>
-
-          <p>
-            <span className="font-semibold">Phone:</span> {order.phone}
-          </p>
-
-          <p>
-            <span className="font-semibold">Address:</span> {order.address}
-          </p>
-
-          {/* 🔥 Show fetched user email */}
-          <p>
-            <span className="font-semibold">Email:</span>{" "}
-            {order.user?.email || "—"}
-          </p>
+    <div className="max-w-5xl mx-auto p-4 space-y-6">
+      {/* Invoice container with pdf-safe class */}
+      <div
+        ref={invoiceRef}
+        className="p-8 bg-white text-black pdf-safe"
+        style={{ color: "#000", backgroundColor: "#fff" }} // enforce base colors
+      >
+        {/* Header */}
+        <div className="flex justify-between items-start mb-8 border-b pb-4">
+          <div>
+            <h2 className="text-3xl font-bold">INVOICE</h2>
+            <p className="text-sm text-gray-500">#{order.id}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-bold">Order Details</p>
+            <p className="text-sm">{new Date().toLocaleDateString()}</p>
+          </div>
         </div>
-      </div>
 
-      {/* Order Timeline */}
-      <div className="bg-white p-5 rounded-xl shadow">
-        <h3 className="text-xl font-semibold mb-3">Order Status Timeline</h3>
-        <div className="flex items-center justify-between">
-          {timelineStages.map((stage, index) => (
-            <div
-              key={stage}
-              className={`flex-1 text-center ${
-                index <= stageIndex ? "text-green-600" : "text-gray-400"
-              }`}
-            >
-              ●
-              <p className="text-sm capitalize">
-                {stage.replace(/_/g, " ")}
-              </p>
+        {/* Customer info */}
+        <div className="mb-8">
+          <p className="text-xs uppercase font-bold mb-1 text-gray-400">Customer</p>
+          <p className="font-medium">{order.firstName} {order.lastName}</p>
+          <p className="text-sm">{order.address}</p>
+          <p className="text-sm">{order.phone}</p>
+        </div>
+
+        {/* Items table */}
+        <table className="w-full mb-8 border-collapse">
+          <thead>
+            <tr style={{ backgroundColor: "#f9fafb" }}>
+              <th className="px-3 py-2 text-left text-sm">Product</th>
+              <th className="px-3 py-2 text-center text-sm">Color</th>
+              <th className="px-3 py-2 text-center text-sm">Qty</th>
+              <th className="px-3 py-2 text-right text-sm">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items?.map((item, i) => {
+              const imageSrc = item.selectedColor?.image || item.imageCover || item.images?.[0] || "";
+              return (
+                <tr key={i} className="border-b">
+                  <td className="px-3 py-4 flex items-center gap-3">
+                    {imageSrc && (
+                      <img
+                        src={imageSrc}
+                        alt=""
+                        className="w-10 h-10 object-cover rounded"
+                        crossOrigin="anonymous"
+                      />
+                    )}
+                    <span className="font-medium text-sm">{item.title}</span>
+                  </td>
+                  <td className="px-3 py-4 text-center">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className="w-4 h-4 rounded-full border"
+                        style={{ backgroundColor: safeColor(item.selectedColor?.hex) }}
+                      />
+                      <span className="text-[10px] text-gray-500">{item.selectedColor?.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-4 text-center text-sm">{item.quantity}</td>
+                  <td className="px-3 py-4 text-right text-sm">{(item.price * item.quantity).toFixed(2)} EGP</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {/* Totals */}
+        <div className="flex justify-end">
+          <div className="w-64 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Subtotal:</span>
+              <span>{order.subtotal} EGP</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Items */}
-      <div className="bg-white p-5 rounded-xl shadow">
-        <h3 className="text-xl font-semibold mb-3">Items</h3>
-
-        <div className="space-y-4">
-          {order.items.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-4 border p-3 rounded-lg"
-            >
-              <Image
-                src={item.imageCover}
-                width={80}
-                height={80}
-                alt={item.title}
-                className="rounded"
-              />
-
-              <div className="flex-1">
-                <p className="font-semibold">{item.title}</p>
-                <p className="text-gray-600">
-                  {item.price} EGP × {item.quantity}
-                </p>
-              </div>
-
-              <p className="font-bold">
-                {(item.quantity * item.price).toFixed(2)} EGP
-              </p>
+            <div className="flex justify-between font-bold text-lg border-t pt-2">
+              <span>Total:</span>
+              <span>{order.total} EGP</span>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="bg-white p-5 rounded-xl shadow text-right">
-        <p>
-          <span className="font-semibold">Subtotal:</span>{" "}
-          {order.subtotal} EGP
-        </p>
-
-        <p>
-          <span className="font-semibold">Delivery Fee:</span>{" "}
-          {order.deliveryFee} EGP
-        </p>
-
-        {/* Promo Code */}
-        {order.promoCode || order.promocode ? (
-          <p>
-            <span className="font-semibold">Promo Code:</span>{" "}
-            {order.promoCode || order.promocode}
-          </p>
-        ) : null}
-
-        <p>
-          <span className="font-semibold">Discount:</span>{" "}
-          {order.discount || 0} EGP
-        </p>
-
-        <p className="text-2xl font-bold mt-3">
-          Total: {order.total} EGP
-        </p>
-      </div>
+      {/* Download PDF button */}
+      <button
+        onClick={generatePDF}
+        className="w-full md:w-auto bg-black text-white px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-transform active:scale-95"
+      >
+        🧾 Download PDF Invoice
+      </button>
     </div>
   );
 }

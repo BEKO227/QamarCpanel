@@ -5,11 +5,15 @@ import { db } from "@/lib/firebase";
 import Image from "next/image";
 import AdminSidebar from "./../../components/AdminSideBar";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation"; // import router
+
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const router = useRouter(); // initialize router
+
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -51,7 +55,7 @@ export default function OrdersPage() {
       );
 
       toast.success("Order status updated!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update status");
     }
   };
@@ -67,18 +71,12 @@ export default function OrdersPage() {
 
   const filteredOrders = orders.filter((order) => {
     const term = searchTerm.toLowerCase();
-    const firstName = order.firstName?.toLowerCase() || "";
-    const lastName = order.lastName?.toLowerCase() || "";
-    const email = order.user?.email?.toLowerCase() || "";
-    const phone = order.phone?.toLowerCase() || "";
-    const orderId = order.id.toLowerCase();
-
     return (
-      orderId.includes(term) ||
-      firstName.includes(term) ||
-      lastName.includes(term) ||
-      email.includes(term) ||
-      phone.includes(term)
+      order.id.toLowerCase().includes(term) ||
+      order.firstName?.toLowerCase().includes(term) ||
+      order.lastName?.toLowerCase().includes(term) ||
+      order.user?.email?.toLowerCase().includes(term) ||
+      order.phone?.toLowerCase().includes(term)
     );
   });
 
@@ -89,53 +87,45 @@ export default function OrdersPage() {
       <main className="flex-1 p-8 bg-gray-100">
         <h2 className="text-3xl font-bold mb-6">Orders</h2>
 
-        {/* Search */}
         <input
           type="text"
           placeholder="Search by Order ID, Name, Email, or Phone..."
-          className="w-full p-3 mb-6 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 outline-none"
+          className="w-full p-3 mb-6 border rounded-lg shadow-sm"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
 
         {filteredOrders.length === 0 ? (
-          <p className="text-gray-600 text-lg">No orders found.</p>
+          <p className="text-gray-600">No orders found.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredOrders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white p-6 rounded-2xl shadow hover:shadow-md transition border border-gray-200"
+                className="bg-white p-6 rounded-2xl shadow border"
               >
                 {/* Header */}
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">
-                      <span className="font-semibold">Order ID:</span> {order.id}
+                    <p className="text-xs text-gray-500">
+                      <b>Order ID:</b> {order.id}
                     </p>
-
                     <h3 className="font-semibold text-lg">
                       {order.firstName} {order.lastName}
                     </h3>
-
-                    <p className="text-sm text-gray-600">{order.address}</p>
-                    <p className="text-sm text-gray-600">{order.phone}</p>
-
+                    <p className="text-sm">{order.phone}</p>
                     {order.user?.email && (
-                      <p className="text-sm text-gray-700">
-                        <span className="font-semibold">Email:</span>{" "}
-                        {order.user.email}
-                      </p>
+                      <p className="text-sm">{order.user.email}</p>
                     )}
                   </div>
 
-                  {/* Status */}
                   <div className="text-right">
-                    <p className="text-sm font-semibold mb-1">Status</p>
                     <select
-                      className="border rounded-lg px-3 py-1 text-sm bg-gray-50"
+                      className="border rounded px-3 py-1 text-sm"
                       value={order.status}
-                      onChange={(e) => updateStatus(order.id, e.target.value)}
+                      onChange={(e) =>
+                        updateStatus(order.id, e.target.value)
+                      }
                     >
                       {statuses.map((s) => (
                         <option key={s} value={s}>
@@ -146,84 +136,64 @@ export default function OrdersPage() {
 
                     <button
                       onClick={() =>
-                        setExpandedId(expandedId === order.id ? null : order.id)
+                        setExpandedId(
+                          expandedId === order.id ? null : order.id
+                        )
                       }
-                      className="block mt-3 bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm hover:bg-blue-200"
+                      className="block mt-2 text-blue-600 text-sm"
                     >
                       {expandedId === order.id
                         ? "Hide Details"
                         : `View Details (${order.items.length})`}
                     </button>
+
+                    {/* ✅ NEW: Redirect to full order page */}
+                    <button
+                      onClick={() => router.push(`/admin/orders/${order.id}`)}
+                      className="block mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      View Full Details
+                    </button>
                   </div>
                 </div>
 
-                {/* Expanded Items */}
+                {/* Items */}
                 {expandedId === order.id && (
-                  <div className="mt-5">
-                    <div className="grid grid-cols-2 gap-3">
-                      {order.items.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="border p-3 rounded-xl bg-gray-50 flex flex-col items-center"
-                        >
-                          {item.imageCover && (
-                            <Image
-                              src={item.imageCover}
-                              alt={item.title}
-                              width={90}
-                              height={90}
-                              className="rounded mb-2"
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    {order.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="border rounded-lg p-3 bg-gray-50 text-center"
+                      >
+                        {item.imageCover && (
+                          <Image
+                            src={item.imageCover}
+                            alt={item.title}
+                            width={90}
+                            height={90}
+                            className="mx-auto rounded mb-2"
+                          />
+                        )}
+
+                        <p className="font-semibold text-sm">{item.title}</p>
+                        <p className="text-xs">Qty: {item.quantity}</p>
+                        <p className="text-xs">{item.price} EGP</p>
+
+                        {item.selectedColor?.hex && (
+                          <div className="flex justify-center items-center gap-2 mt-2">
+                            <span
+                              className="w-4 h-4 rounded-full border"
+                              style={{
+                                backgroundColor: item.selectedColor.hex,
+                              }}
                             />
-                          )}
-                          <p className="font-semibold text-sm text-center">
-                            {item.title}
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            Price: {item.price} EGP
-                          </p>
-                          <p className="text-xs">Qty: {item.quantity}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Summary */}
-                    <div className="mt-6 text-right space-y-1 text-gray-700">
-                      <p>
-                        <span className="font-bold">Subtotal:</span>{" "}
-                        {order.subtotal?.toFixed(2)} EGP
-                      </p>
-                      <p>
-                        <span className="font-bold">Delivery:</span>{" "}
-                        {order.deliveryFee?.toFixed(2)} EGP
-                      </p>
-                      <p>
-                        <span className="font-bold">Discount:</span>{" "}
-                        {order.discount?.toFixed(2)} EGP
-                      </p>
-                      <p className="font-bold text-lg">
-                        Total: {order.total?.toFixed(2)} EGP
-                      </p>
-
-                      <p className="text-sm">
-                        <span className="font-semibold">Payment:</span>{" "}
-                        {order.paymentMethod}
-                      </p>
-
-                      <p className="text-sm">
-                        <span className="font-semibold">Created:</span>{" "}
-                        {order.createdAt?.seconds
-                          ? new Date(
-                              order.createdAt.seconds * 1000
-                            ).toLocaleString()
-                          : "N/A"}
-                      </p>
-
-                      {order.promoCode && (
-                        <p className="text-green-700 text-sm font-semibold">
-                          Promo: {order.promoCode}
-                        </p>
-                      )}
-                    </div>
+                            <span className="text-xs">
+                              {item.selectedColor.name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

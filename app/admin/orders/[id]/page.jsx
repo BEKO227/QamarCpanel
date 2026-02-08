@@ -1,8 +1,8 @@
 import OrderDetailsClient from "./OrderDetailsClient";
 import AdminSidebar from "./../../../components/AdminSideBar";
 
-export default function OrderDetailsPage({ params }) {
-  const { id } = params; // correct usage
+export default async function OrderDetailsPage({ params }) {
+  const { id } = await params; // ✅ REQUIRED in Next 16
 
   return (
     <div className="flex">

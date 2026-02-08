@@ -111,6 +111,11 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+.pdf-safe * {
+  color: #000 !important;
+  background-color: #fff !important;
+  border-color: #000 !important;
+}
 .input {
   @apply p-2 border rounded w-full;
 }
