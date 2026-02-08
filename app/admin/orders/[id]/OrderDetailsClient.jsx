@@ -7,18 +7,32 @@ export default function OrderDetailsClient({ id }) {
   const [order, setOrder] = useState(null);
   const invoiceRef = useRef();
 
-  // Safely handle product color dots
+  // Safely handle hex colors for color dots
   const safeColor = (color) => {
     if (!color) return "#ccc";
     if (color.includes("lab") || color.includes("oklch") || color.includes("lch")) return "#000000";
     return color;
   };
 
+  // Recursively override any unsupported colors in the DOM
+  const overrideColors = (root) => {
+    const elements = root.querySelectorAll("*");
+    elements.forEach((el) => {
+      const style = window.getComputedStyle(el);
+      if (style.color && /(lab|oklch|lch)/.test(style.color)) el.style.color = "#000";
+      if (style.backgroundColor && /(lab|oklch|lch)/.test(style.backgroundColor)) el.style.backgroundColor = "#fff";
+      if (style.borderColor && /(lab|oklch|lch)/.test(style.borderColor)) el.style.borderColor = "#000";
+    });
+  };
+
   const generatePDF = async () => {
     if (!invoiceRef.current) return;
 
-    // Clone invoice to avoid modifying live DOM
+    // Clone the invoice to avoid modifying the live DOM
     const clone = invoiceRef.current.cloneNode(true);
+
+    // Override unsupported colors
+    overrideColors(clone);
 
     // Dynamically import html2pdf
     const html2pdf = (await import("html2pdf.js")).default;
@@ -66,11 +80,11 @@ export default function OrderDetailsClient({ id }) {
 
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6">
-      {/* Invoice container with pdf-safe class */}
+      {/* Invoice container */}
       <div
         ref={invoiceRef}
-        className="p-8 bg-white text-black pdf-safe"
-        style={{ color: "#000", backgroundColor: "#fff" }} // enforce base colors
+        className="p-8 bg-white text-black"
+        style={{ color: "#000", backgroundColor: "#fff" }} // enforce safe base colors
       >
         {/* Header */}
         <div className="flex justify-between items-start mb-8 border-b pb-4">
